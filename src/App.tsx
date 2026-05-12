@@ -43,9 +43,7 @@ interface MockParagraph {
 
 const INITIAL_AIGC_TEXT_QUICK = `Furthermore, it is widely acknowledged that deep learning frameworks have revolutionized the field of natural language processing. In conclusion, the results obtained from our experiments clearly demonstrate that the proposed model outperforms traditional baseline methods by a significant margin. Additionally, it is worth noting that further research is required to fully understand the underlying mechanisms. Consequently, we can infer that this architecture represents a crucial milestone in artificial intelligence development.`;
 
-const HUMANIZED_AIGC_TEXT_QUICK = `The adoption of deep learning frameworks has fundamentally reshaped natural language processing. Our empirical results show that the proposed model substantially outperforms traditional baselines. However, the precise mechanisms driving these improvements warrant closer study. This architecture establishes a compelling new benchmark for future neural network design in language tasks.`;
-
-const INITIAL_PLAGIARISM_TEXT_QUICK = `基于Java的教务管理系统主要是通过多线程并发机制来处理学生选课请求的。该系统可以实现学生选课、排课、成绩录入等功能。由于采用了高性能的后台缓存技术，系统不仅具备极佳的运行稳定性，还能够很好地应对数万名学生同时在线访问造成的并发流量压力。`;
+const INITIAL_PLAGIARISM_TEXT_QUICK = `基于Java的教务管理系统主要是通过多线程并发机制来处理学生选课请求的。该系统可以实现学生选课、排课、成绩录入等功能。由于采用了高性能的后台缓存技术，系统不仅具备极佳运行稳定性，还能够很好地应对数万名学生同时在线访问造成的并发流量压力。`;
 
 const PARAPHRASED_PLAGIARISM_TEXT_QUICK = `本研究设计的Java教务选课系统利用多线程调度队列缓冲瞬时选课流量。系统主要涵盖成绩录入、智能排课和选课逻辑调度等核心微服务。后台底层引入了高性能分布式缓存机制，使其在高并发选课场景下仍能保持高可用性。`;
 
@@ -380,22 +378,41 @@ export default function App() {
   // SINGLE TAB ACTIONS
   // ==========================================
 
-  const handleHumanizeQuick = () => {
+  const handleHumanizeQuick = async () => {
     setIsHumanizingQuick(true);
     setHumanizedTextQuick('');
     
-    let currentRate = 85;
-    const rateInterval = setInterval(() => {
-      currentRate -= 1;
-      setAigcRateQuick(Math.max(currentRate, 12));
-      if (currentRate <= 12) clearInterval(rateInterval);
-    }, 30);
+    try {
+      const response = await fetch('/api/humanize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ originalText: aigcTextQuick })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || '接口执行失败');
+      }
 
-    setTimeout(() => {
-      simulateTypewriter(HUMANIZED_AIGC_TEXT_QUICK, setHumanizedTextQuick, () => {
+      let currentRate = 85;
+      const rateInterval = setInterval(() => {
+        currentRate -= 1;
+        setAigcRateQuick(Math.max(currentRate, 12));
+        if (currentRate <= 12) clearInterval(rateInterval);
+      }, 30);
+
+      simulateTypewriter(data.humanizedText || '未返回有效重构内容', setHumanizedTextQuick, () => {
         setIsHumanizingQuick(false);
       });
-    }, 1500);
+    } catch (err: any) {
+      console.error("人化失败:", err);
+      simulateTypewriter(`❌ 降重网络连接失败：${err.message || '网络错误'}\n\n【排查助手】\n1. 如果在本地运行，本系统已内置本地 Mock API 开发功能，运行极其便利。\n2. 如果您希望运行真实的 Google Gemini 大模型降重，请在系统环境变量或本地配置 GEMINI_API_KEY 即可自动无缝激活！`, setHumanizedTextQuick, () => {
+        setIsHumanizingQuick(false);
+      });
+    }
   };
 
   const handleParaphraseQuick = () => {
