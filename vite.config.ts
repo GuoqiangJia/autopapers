@@ -35,14 +35,20 @@ function localApiPlugin() {
                 return;
               }
 
-              // Call actual Google Gemini API (using Gemini 2.5/1.5 Flash for safety and speed)
-              const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: [{
-                    parts: [{
-                      text: `你是一位殿堂级的中文学术论文编辑与去 AI 检测专家。请将用户输入的学术段落进行彻底的“去 AIGC 痕迹/人化润色”。
+              // Call actual Google Gemini API with a resilient model routing loop
+              const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+              let textResult = '';
+              let lastError: any = null;
+
+              for (const model of modelsToTry) {
+                try {
+                  const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      contents: [{
+                        parts: [{
+                          text: `你是一位殿堂级的中文学术论文编辑与去 AI 检测专家。请将用户输入的学术段落进行彻底的“去 AIGC 痕迹/人化润色”。
 【强制要求】：
 1. 严禁改动任何专业名词、核心算法公式、代码数据与参考文献。
 2. 彻底打碎原本由大模型翻译或直接生成而来的“机械感、句式单一、翻译味重”的句式。
@@ -52,26 +58,37 @@ function localApiPlugin() {
 
 用户需要重构的原文字如下：
 ${originalText}`
-                    }]
-                  }],
-                  generationConfig: { temperature: 0.7 }
-                })
-              });
+                        }]
+                      }],
+                      generationConfig: { temperature: 0.7 }
+                    })
+                  });
 
-              if (!geminiResponse.ok) {
-                const errData = await geminiResponse.json();
-                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ error: `Google Gemini API returned error: ${JSON.stringify(errData)}` }));
-                return;
+                  if (geminiResponse.ok) {
+                    const data = await geminiResponse.json() as any;
+                    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (candidateText) {
+                      textResult = candidateText.trim();
+                      break; // Success! Exit loop.
+                    }
+                  } else {
+                    lastError = await geminiResponse.json();
+                  }
+                } catch (err: any) {
+                  lastError = { message: err.message };
+                }
               }
 
-              const data = await geminiResponse.json() as any;
-              const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text || '未获得有效返回，请重试';
+              if (!textResult) {
+                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ error: `Google Gemini API returned error (tried ${modelsToTry.join(', ')}): ${JSON.stringify(lastError)}` }));
+                return;
+              }
 
               res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
               res.end(JSON.stringify({
                 success: true,
-                humanizedText: textResult.trim(),
+                humanizedText: textResult,
                 originalText
               }));
             } catch (e: any) {
