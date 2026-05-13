@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   Compass,
   Sun,
-  Moon
+  Moon,
+  RefreshCw
 } from 'lucide-react';
 
 // ==========================================
@@ -810,12 +811,12 @@ export default function App() {
   return (
     <div className={theme === 'light' ? 'light-theme' : ''} style={{
       display: 'flex',
-      minHeight: '100vh',
+      height: '100vh',
       backgroundColor: 'var(--bg-primary)',
       color: 'var(--text-primary)',
       fontFamily: 'var(--font-sans)',
       maxWidth: '100vw',
-      overflowX: 'hidden'
+      overflow: 'hidden'
     }}>
       {/* Hidden native Word file input element */}
       <input 
@@ -1336,11 +1337,11 @@ export default function App() {
                         </div>
 
                         {/* Metadata stats */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', flexShrink: 0 }}>
                             消耗点数: <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>6,805 点</strong>
                           </span>
-                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                             处理进度: 
                             <span style={{ display: 'inline-block', width: '80px', height: '6px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
                               <span style={{ display: 'block', width: `${getWorkspaceProgress()}%`, height: '100%', backgroundColor: 'var(--accent)', transition: 'width 0.3s ease' }}></span>
@@ -1351,14 +1352,30 @@ export default function App() {
                           <button 
                             onClick={handleResetDocument}
                             style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: 'var(--text-muted)',
-                              fontSize: '12px',
-                              cursor: 'pointer'
+                              background: 'rgba(255, 77, 79, 0.05)',
+                              border: '1px solid rgba(255, 77, 79, 0.15)',
+                              borderRadius: '6px',
+                              color: '#ff4d4f',
+                              padding: '5px 12px',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              flexShrink: 0,
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.12)';
+                              e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.3)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.05)';
+                              e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.15)';
                             }}
                           >
-                            重置
+                            <RefreshCw size={11} /> 重置文档
                           </button>
 
                           <button 
@@ -1485,7 +1502,10 @@ export default function App() {
                                   ) : (
                                     <p style={{ fontSize: '13px', lineHeight: '1.8', margin: 0, color: 'var(--text-primary)' }}>
                                       {viewMode === 'diff' ? (
-                                        p.diffSegments.map((seg, idx) => {
+                                        (p.diffSegments && p.diffSegments.length > 0 
+                                          ? p.diffSegments 
+                                          : computeDiff(p.originalText, p.finalText)
+                                        ).map((seg, idx) => {
                                           if (seg.type === 'removed') {
                                             return (
                                               <del 
