@@ -268,69 +268,86 @@ export default function App() {
       }
     }
   }, []);
-  const [uploadedFilename, setUploadedFilename] = useState('基于Java的教务管理系统.docx');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Character-level Longest Common Subsequence (LCS) Diff calculator
-  const computeDiff = (oldStr: string, newStr: string): DiffSegment[] => {
-    const dp: number[][] = Array(oldStr.length + 1).fill(0).map(() => Array(newStr.length + 1).fill(0));
-    
-    for (let i = 1; i <= oldStr.length; i++) {
-      for (let j = 1; j <= newStr.length; j++) {
-        if (oldStr[i - 1] === newStr[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1] + 1;
-        } else {
-          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-        }
-      }
-    }
-
-    const segments: DiffSegment[] = [];
-    let i = oldStr.length;
-    let j = newStr.length;
-
-    while (i > 0 || j > 0) {
-      if (i > 0 && j > 0 && oldStr[i - 1] === newStr[j - 1]) {
-        segments.unshift({ type: 'unchanged', text: oldStr[i - 1] });
-        i--;
-        j--;
-      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-        segments.unshift({ type: 'added', text: newStr[j - 1] });
-        j--;
-      } else {
-        segments.unshift({ type: 'removed', text: oldStr[i - 1] });
-        i--;
-      }
-    }
-
-    const merged: DiffSegment[] = [];
-    for (const seg of segments) {
-      if (merged.length > 0 && merged[merged.length - 1].type === seg.type) {
-        merged[merged.length - 1].text += seg.text;
-      } else {
-        merged.push(seg);
-      }
-    }
-
-    return merged;
+  // Dynamic progress calculator based on processed body paragraphs
+  const getWorkspaceProgress = () => {
+    const bodyParagraphs = paragraphs.filter(p => p.type === 'body');
+    if (bodyParagraphs.length === 0) return 100;
+    const processedCount = bodyParagraphs.filter(p => p.finalText && p.finalText.length > 0).length;
+    return Math.round((processedCount / bodyParagraphs.length) * 100);
   };
 
-  // Automatically load saved workspace status from local storage on mount
-  useEffect(() => {
-    const savedParagraphs = localStorage.getItem('autopapers_paragraphs');
-    const savedFilename = localStorage.getItem('autopapers_filename');
-    const savedHasUploaded = localStorage.getItem('autopapers_has_uploaded');
+  // Batch humanize all unprocessed body paragraphs concurrently
+  const handleBatchHumanize = async () => {
+    const bodyParagraphs = paragraphs.filter(p => p.type === 'body');
+    if (bodyParagraphs.length === 0) return;
 
-    if (savedParagraphs && savedFilename && savedHasUploaded === 'true') {
-      try {
-        setParagraphs(JSON.parse(savedParagraphs));
-        setUploadedFilename(savedFilename);
-        setHasUploaded(true);
-      } catch (err) {
-        console.error('Error restoring workspace storage state', err);
-      }
+    if (!confirm(`确认要一键全篇降重改写这 ${bodyParagraphs.length} 个学术正文段落吗？\n（这会调用大语言模型进行高吞吐量并发计算）`)) {
+      return;
     }
-  }, []);
+
+    // Set all body paragraphs as regenerating concurrently
+    const activeIds = bodyParagraphs.map(p => p.id);
+    setRegeneratingCards(prev => {
+      const next = { ...prev };
+      activeIds.forEach(id => {
+        next[id] = true;
+      });
+      return next;
+    });
+
+    try {
+      // Execute all humanization API calls in parallel
+      const promises = bodyParagraphs.map(async (p) => {
+        try {
+          const response = await fetch('/api/humanize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ originalText: p.originalText })
+          });
+          if (!response.ok) throw new Error('API Error');
+          const data = await response.json();
+          return {
+            id: p.id,
+            success: true,
+            finalText: data.humanizedText,
+            diffSegments: computeDiff(p.originalText, data.humanizedText)
+          };
+        } catch (err) {
+          return { id: p.id, success: false };
+        }
+      });
+
+      const results = await Promise.all(promises);
+
+      setParagraphs(prevParagraphs => {
+        const nextList = prevParagraphs.map(p => {
+          const match = results.find(r => r.id === p.id);
+          if (match && match.success && match.finalText) {
+            return {
+              ...p,
+              finalText: match.finalText,
+              diffSegments: match.diffSegments
+            };
+          }
+          return p;
+        });
+        localStorage.setItem('autopapers_paragraphs', JSON.stringify(nextList));
+        return nextList;
+      });
+
+    } catch (err: any) {
+      alert(`一键批量降重失败: ${err.message}`);
+    } finally {
+      // Clear regenerating states
+      setRegeneratingCards(prev => {
+        const next = { ...prev };
+        activeIds.forEach(id => {
+          next[id] = false;
+        });
+        return next;
+      });
+    }
+  };
   
   // Custom Paragraph Cards states for Workspace Diff View
   const [paragraphs, setParagraphs] = useState<MockParagraph[]>(MOCK_AIGC_PARAGRAPHS);
@@ -1326,9 +1343,9 @@ export default function App() {
                           <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             处理进度: 
                             <span style={{ display: 'inline-block', width: '80px', height: '6px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                              <span style={{ display: 'block', width: '100%', height: '100%', backgroundColor: 'var(--accent)' }}></span>
+                              <span style={{ display: 'block', width: `${getWorkspaceProgress()}%`, height: '100%', backgroundColor: 'var(--accent)', transition: 'width 0.3s ease' }}></span>
                             </span>
-                            <strong style={{ color: 'var(--accent)' }}>100%</strong>
+                            <strong style={{ color: 'var(--accent)' }}>{getWorkspaceProgress()}%</strong>
                           </span>
 
                           <button 
@@ -1371,7 +1388,10 @@ export default function App() {
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                           ⚠️ 系统已过滤非正文（标题、大纲目录、参考文献等），默认保持不改写以护航文章格式。
                         </span>
-                        <span style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span 
+                          onClick={handleBatchHumanize}
+                          style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
+                        >
                           ✍️ 免费强制全部改写
                         </span>
                       </div>
@@ -1458,6 +1478,10 @@ export default function App() {
                                       <div style={{ border: '2px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
                                       学者AI正在重算本段降重策略，重组红绿比对树...
                                     </div>
+                                  ) : !p.finalText ? (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic', display: 'block', padding: '12px 0' }}>
+                                      💡 等待降重重构。请点击右下角『一键降重改写』启动大语言模型。
+                                    </span>
                                   ) : (
                                     <p style={{ fontSize: '13px', lineHeight: '1.8', margin: 0, color: 'var(--text-primary)' }}>
                                       {viewMode === 'diff' ? (
@@ -1506,30 +1530,50 @@ export default function App() {
 
                                 {/* 3. Card footer action controls */}
                                 <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                                  <span style={{ fontSize: '11px', color: '#52c41a', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#52c41a' }}></span>
-                                    已处理
-                                  </span>
+                                  {!p.finalText ? (
+                                    <span style={{ fontSize: '11px', color: '#faad14', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#faad14' }}></span>
+                                      待处理
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '11px', color: '#52c41a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#52c41a' }}></span>
+                                      已处理
+                                    </span>
+                                  )}
 
                                   <div style={{ display: 'flex', gap: '16px' }}>
-                                    <button 
-                                      onClick={() => navigator.clipboard.writeText(p.finalText)}
-                                      style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                    >
-                                      复制段落
-                                    </button>
-                                    <button 
-                                      onClick={() => toggleCardViewMode(p.id)}
-                                      style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
-                                    >
-                                      {viewMode === 'diff' ? '改后 (隐藏红字)' : '比对 (显示差异)'}
-                                    </button>
+                                    {p.finalText && (
+                                      <>
+                                        <button 
+                                          onClick={() => navigator.clipboard.writeText(p.finalText)}
+                                          style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                        >
+                                          复制段落
+                                        </button>
+                                        <button 
+                                          onClick={() => toggleCardViewMode(p.id)}
+                                          style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
+                                        >
+                                          {viewMode === 'diff' ? '改后 (隐藏红字)' : '比对 (显示差异)'}
+                                        </button>
+                                      </>
+                                    )}
                                     <button 
                                       onClick={() => handleRegenerateCard(p.id)}
                                       disabled={isCardRegenerating}
-                                      style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '11px', cursor: 'pointer', fontStyle: 'italic' }}
+                                      style={{ 
+                                        background: 'transparent', 
+                                        border: 'none', 
+                                        color: !p.finalText ? 'var(--accent)' : 'var(--text-muted)', 
+                                        fontSize: !p.finalText ? '12.5px' : '11px', 
+                                        cursor: 'pointer', 
+                                        fontWeight: !p.finalText ? 'bold' : 'normal',
+                                        fontStyle: !p.finalText ? 'normal' : 'italic',
+                                        textDecoration: !p.finalText ? 'underline' : 'none'
+                                      }}
                                     >
-                                      免费重新生成
+                                      {!p.finalText ? '一键降重改写' : '重新生成'}
                                     </button>
                                   </div>
                                 </div>
