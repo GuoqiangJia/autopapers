@@ -268,6 +268,69 @@ export default function App() {
       }
     }
   }, []);
+  const [uploadedFilename, setUploadedFilename] = useState('基于Java的教务管理系统.docx');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Character-level Longest Common Subsequence (LCS) Diff calculator
+  const computeDiff = (oldStr: string, newStr: string): DiffSegment[] => {
+    const dp: number[][] = Array(oldStr.length + 1).fill(0).map(() => Array(newStr.length + 1).fill(0));
+    
+    for (let i = 1; i <= oldStr.length; i++) {
+      for (let j = 1; j <= newStr.length; j++) {
+        if (oldStr[i - 1] === newStr[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+
+    const segments: DiffSegment[] = [];
+    let i = oldStr.length;
+    let j = newStr.length;
+
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldStr[i - 1] === newStr[j - 1]) {
+        segments.unshift({ type: 'unchanged', text: oldStr[i - 1] });
+        i--;
+        j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        segments.unshift({ type: 'added', text: newStr[j - 1] });
+        j--;
+      } else {
+        segments.unshift({ type: 'removed', text: oldStr[i - 1] });
+        i--;
+      }
+    }
+
+    const merged: DiffSegment[] = [];
+    for (const seg of segments) {
+      if (merged.length > 0 && merged[merged.length - 1].type === seg.type) {
+        merged[merged.length - 1].text += seg.text;
+      } else {
+        merged.push(seg);
+      }
+    }
+
+    return merged;
+  };
+
+  // Automatically load saved workspace status from local storage on mount
+  useEffect(() => {
+    const savedParagraphs = localStorage.getItem('autopapers_paragraphs');
+    const savedFilename = localStorage.getItem('autopapers_filename');
+    const savedHasUploaded = localStorage.getItem('autopapers_has_uploaded');
+
+    if (savedParagraphs && savedFilename && savedHasUploaded === 'true') {
+      try {
+        setParagraphs(JSON.parse(savedParagraphs));
+        setUploadedFilename(savedFilename);
+        setHasUploaded(true);
+      } catch (err) {
+        console.error('Error restoring workspace storage state', err);
+      }
+    }
+  }, []);
   
   // Custom Paragraph Cards states for Workspace Diff View
   const [paragraphs, setParagraphs] = useState<MockParagraph[]>(MOCK_AIGC_PARAGRAPHS);
