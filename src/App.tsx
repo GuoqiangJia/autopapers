@@ -38,6 +38,16 @@ interface MockParagraph {
   isHeaderSkipped?: boolean;
 }
 
+interface HistoryRecord {
+  id: string;
+  filename: string;
+  originalAigcRate: number;
+  finalAigcRate: number;
+  uploadTime: string;
+  pointsConsumed: number;
+  paragraphs: MockParagraph[];
+}
+
 // ==========================================
 // MOCK DATA & CONSTANTS
 // ==========================================
@@ -174,6 +184,125 @@ const MOCK_AIGC_PARAGRAPHS: MockParagraph[] = [
   }
 ];
 
+const INITIAL_HISTORY_RECORDS: HistoryRecord[] = [
+  {
+    id: 'history_java_academic_1',
+    filename: '基于Java的教务管理系统.docx',
+    originalAigcRate: 85,
+    finalAigcRate: 12,
+    uploadTime: '2026-05-13 16:24',
+    pointsConsumed: 6805,
+    paragraphs: MOCK_AIGC_PARAGRAPHS
+  },
+  {
+    id: 'history_microservices_academic_2',
+    filename: '微服务架构下智慧校园选课系统的弹性调度机制.docx',
+    originalAigcRate: 76,
+    finalAigcRate: 14,
+    uploadTime: '2026-05-12 11:42',
+    pointsConsumed: 4210,
+    paragraphs: [
+      {
+        id: 1,
+        type: 'header',
+        originalText: '一、 微服务流量治理与熔断降级架构',
+        finalText: '一、 微服务流量治理与熔断降级架构',
+        isHeaderSkipped: true,
+        diffSegments: []
+      },
+      {
+        id: 2,
+        type: 'body',
+        originalText: '由于每学期初全校学生都会在同一时间登录教务选课系统，这时候服务器面临的压力非常大，经常会出现响应超时或者直接崩溃的情况。因此我们必须要引入微服务架构。在微服务架构里，我们将选课服务单独拆分出来。并且在选课流量暴增的时候，为了保护数据库不被打垮，我们使用了Sentinel流量控制工具，对不重要的流量进行限流。如果在某一段时间内数据库的压力实在太大，导致有些选课接口延迟非常高，系统就会触发熔断降级保护。',
+        finalText: '鉴于每学期初学生并发登录选课造成的瞬时服务流量激增，传统的单体架构常因数据库I/O瓶颈或线程池耗尽而导致连接超时或整机溃散。针对此，本系统引入了高内聚的分布式微服务治理架构。将高负载的选课事务解耦为独立的微服务节点，并引入 Sentinel 流量感知与弹性控制组件，在突发选课流量达到阈值时自动执行精细化限流。同时配置分布式熔断降级策略，当底层数据库响应时延超过安全阈值时，自动将外围查询降级至缓存只读副本，保障了教务系统的持续高可用性。',
+        diffSegments: [
+          { type: 'unchanged', text: '鉴于每学期初学生' },
+          { type: 'removed', text: '全校学生都会在同一时间登录教务选课系统，这时候服务器面临的压力非常大，经常会出现响应超时或者直接崩溃的情况。因此我们必须要引入微服务架构。在' },
+          { type: 'added', text: '并发登录选课造成的瞬时服务流量激增，传统的单体架构常因数据库I/O瓶颈或线程池耗尽而导致连接超时或整机溃散。针对此，本系统引入了高内聚的分布式' },
+          { type: 'unchanged', text: '微服务' },
+          { type: 'removed', text: '架构里，我们将选课服务单独拆分出来。并且在' },
+          { type: 'added', text: '治理架构。将高负载的选课事务解耦为独立的微服务节点，并引入 ' },
+          { type: 'unchanged', text: 'Sentinel ' },
+          { type: 'removed', text: '流量控制工具，对不重要的流量进行限流。如果' },
+          { type: 'added', text: '流量感知与弹性控制组件，在突发选课流量达到阈值时自动执行精细化限流。同时配置分布式熔断降级策略，' },
+          { type: 'unchanged', text: '在' },
+          { type: 'removed', text: '某一段时间内数据库的压力实在太大，导致有些选课接口延迟非常高，系统就会触发熔断降级保护。' },
+          { type: 'added', text: '底层数据库响应时延超过安全阈值时，自动将外围查询降级至缓存只读副本，保障了教务系统的持续高可用性。' }
+        ]
+      },
+      {
+        id: 3,
+        type: 'body',
+        originalText: '为了让系统运行更加流畅，我们还在微服务中间加入了Redis缓存。以前学生选课都是直接去查MySQL数据库里的课程余量，高并发下查数据库非常慢。现在我们把所有的课程余量数据全部预热写到Redis集群里面。学生选课的时候直接查Redis，由于Redis是在内存里读写，速度极快，这就大大降低了对MySQL数据库的直接访问。只有当学生真正抢到课，扣减完Redis里的库存之后，我们才会通过RabbitMQ消息队列异步把选课记录写回MySQL数据库中。',
+        finalText: '为了最大化消减系统的响应延迟，本架构引入了多级分布式缓存加速机制。在服务初始化阶段，将所有高频读取的课程资源配额数据预热并装载至 Redis 高速内存缓存集群中，替代原本极易产生锁竞争的传统关系型数据库（MySQL）轮询查验模式。当发生瞬时高并发选课时，所有配额校核均在高速内存层面完成。在 Redis 层成功扣减库存后，系统生成选课事务凭证，并利用 RabbitMQ 异步消息队列执行缓冲削峰，将数据变更持久化任务非阻塞式地分发回后台，极大减轻了核心数据库的并发写入负荷。',
+        diffSegments: [
+          { type: 'unchanged', text: '为了' },
+          { type: 'removed', text: '让系统运行更加流畅，我们还在微服务中间加入了Redis缓存。以前学生选课都是直接去查MySQL数据库里的课程余量，高并发下查数据库非常慢。现在我们把所有的课程余量数据全部预热写到Redis集群里面。学生选课的时候直接查Redis，由于Redis是在内存里读写，速度极快，这就大大降低了对MySQL数据库的直接访问。只有当学生真正抢到课，扣减完Redis里的库存之后，我们才会通过' },
+          { type: 'added', text: '最大化消减系统的响应延迟，本架构引入了多级分布式缓存加速机制。在服务初始化阶段，将所有高频读取的课程资源配额数据预热并装载至 Redis 高速内存缓存集群中，替代原本极易产生锁竞争的传统关系型数据库（MySQL）轮询查验模式。当发生瞬时高并发选课时，所有配额校核均在高速内存层面完成。在 Redis 层成功扣减库存后，系统生成选课事务凭证，并利用 ' },
+          { type: 'unchanged', text: 'RabbitMQ ' },
+          { type: 'removed', text: '消息队列异步把选课记录写回MySQL数据库中。' },
+          { type: 'added', text: '异步消息队列执行缓冲削峰，将数据变更持久化任务非阻塞式地分发回后台，极大减轻了核心数据库的并发写入负荷。' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'history_nlp_alignment_3',
+    filename: '基于深度学习的学术引文格式对齐研究.docx',
+    originalAigcRate: 92,
+    finalAigcRate: 8,
+    uploadTime: '2026-05-10 09:15',
+    pointsConsumed: 5380,
+    paragraphs: [
+      {
+        id: 1,
+        type: 'header',
+        originalText: '一、 基于神经机器翻译模型的引文转换机制',
+        finalText: '一、 基于神经机器翻译模型的引文转换机制',
+        isHeaderSkipped: true,
+        diffSegments: []
+      },
+      {
+        id: 2,
+        type: 'body',
+        originalText: '以往的参考文献生成器大部分都是用正则表达式去匹配网页或者论文标题，如果用户输入的信息不是很规范，比如少了一个点或者少了一个空格，正则表达式就匹配不出来了，导致生成的参考文献格式经常出错。为了解决这个问题，我们在这篇论文中提出了一种基于深度学习的引文格式对齐方法。我们把参考文献转换问题看作是一个端到端机器翻译的过程，输入是用户给出的杂乱的元数据，输出是符合国标GB/T 7714标准的规范引用字符串。',
+        finalText: '传统的引文生成软件主要依赖于启发式正则表达式执行文本模式匹配，此类方法对原始输入数据的规范度有着极高的依赖，在面对缺失符号、语序倒置或格式残缺的非结构化元数据时，极易因规则失配而产生格式生成偏误。本研究突破传统匹配范式，提出一种基于序列到序列（Seq2Seq）深度神经网络的引文格式智能对齐方法。我们将零散、混乱的文献元数据校和流程建模为端到端神经翻译过程，以非结构化引文碎片为输入，经过注意力机制感知，输出精准对齐我国学术规范（GB/T 7714-2015）的标准化引文字符串。',
+        diffSegments: [
+          { type: 'unchanged', text: '传统' },
+          { type: 'removed', text: '的参考文献生成器大部分都是用' },
+          { type: 'added', text: '的引文生成软件主要依赖于启发式' },
+          { type: 'unchanged', text: '正则表达式执行文本' },
+          { type: 'removed', text: '匹配网页或者论文标题，如果用户输入的信息不是很规范，比如少了一个点或者少了一个空格，正则表达式就匹配不出来了，导致生成的参考文献格式经常出错。为了解决这个问题，我们在这篇论文中提出了一种基于深度学习的' },
+          { type: 'added', text: '模式匹配，此类方法对原始输入数据的规范度有着极高的依赖，在面对缺失符号、语序倒置或格式残缺的非结构化元数据时，极易因规则失配而产生格式生成偏误。本研究突破传统匹配范式，提出一种基于序列到序列（Seq2Seq）深度神经网络的' },
+          { type: 'unchanged', text: '引文格式' },
+          { type: 'removed', text: '对齐方法。我们把参考文献转换问题看作是一个' },
+          { type: 'added', text: '智能对齐方法。我们将零散、混乱的文献元数据校和流程建模为' },
+          { type: 'unchanged', text: '端到端' },
+          { type: 'removed', text: '机器' },
+          { type: 'added', text: '神经' },
+          { type: 'unchanged', text: '翻译过程，以' },
+          { type: 'removed', text: '用户给出的杂乱的元数据，输出是符合国标GB/T 7714标准的规范引用字符串。' },
+          { type: 'added', text: '非结构化引文碎片为输入，经过注意力机制感知，输出精准对齐我国学术规范（GB/T 7714-2015）的标准化引文字符串。' }
+        ]
+      },
+      {
+        id: 3,
+        type: 'body',
+        originalText: '在模型训练方面，我们收集了大量的学术文献数据。由于不同领域的论文引用格式都不太一样，我们先用大型学术语料库对Transformer模型进行了预训练，让它掌握基本的语言规律。然后，我们自己构建了一个包含数十万条中文和英文标准参考文献的数据集，在这个数据集上对预训练模型进行微调。为了提高模型在遇到错误输入时的容错能力，我们还在训练集里人为地加入了一些拼写错误或者标点缺失的样本。实验结果表明，我们的方法在多种复杂情况下都能生成正确的参考文献。',
+        finalText: '在模型预训练与参数调优层面，本方法选用经典 Transformer 架构，并在海量多学科中文及英文文献学术文本上进行通用特征抽取与表征预训练。为适配中文学术引文对齐任务，本研究自主构建了一个包含三十万条高精标引参考文献的大规模平行语料库进行监督微调。为了增强深度模型对杂乱输入的鲁棒性，本研究在微调数据集内人为融入了占比例 15% 的噪声注入样本（如缺失出版商、缩写偏误、拼写混淆等）。评估结果表明，该模型在非结构化引文恢复与格式化任务中展现出了极强的容错性能和对齐准确率。',
+        diffSegments: [
+          { type: 'unchanged', text: '在模型' },
+          { type: 'removed', text: '训练方面，我们收集了大量的学术文献数据。由于不同领域的论文引用格式都不太一样，我们先用大型学术语料库对Transformer模型进行了预训练，让它掌握基本的语言规律。然后，我们自己构建了一个包含数十万条中文和英文标准参考文献的数据集，在这个数据集上对预训练模型进行微调。为了提高模型在遇到错误输入时的容错能力，我们还在训练集' },
+          { type: 'added', text: '预训练与参数调优层面，本方法选用经典 Transformer 架构，并在海量多学科中文及英文文献学术文本上进行通用特征抽取与表征预训练。为适配中文学术引文对齐任务，本研究自主构建了一个包含三十万条高精标引参考文献的大规模平行语料库进行监督微调。为了增强深度模型对杂乱输入的鲁棒性，本研究在微调数据集' },
+          { type: 'unchanged', text: '内人为' },
+          { type: 'removed', text: '地加入了一些拼写错误或者标点缺失的样本。实验结果表明，我们的方法在多种复杂情况下都能生成正确的参考文献。' },
+          { type: 'added', text: '融入了占比例 15% 的噪声注入样本（如缺失出版商、缩写偏误、拼写混淆等）。评估结果表明，该模型在非结构化引文恢复与格式化任务中展现出了极强的容错性能和对齐准确率。' }
+        ]
+      }
+    ]
+  }
+];
+
 // ==========================================
 // MAIN APP COMPONENT
 // ==========================================
@@ -253,22 +382,79 @@ export default function App() {
     return merged;
   };
 
+  // Core Workspace States
+  const [paragraphs, setParagraphs] = useState<MockParagraph[]>(MOCK_AIGC_PARAGRAPHS);
+  const [paragraphViewModes, setParagraphViewModes] = useState<Record<number, 'diff' | 'final'>>({
+    43: 'diff',
+    44: 'diff'
+  });
+  const [regeneratingCards, setRegeneratingCards] = useState<Record<number, boolean>>({});
+
+  // History Records States
+  const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>(() => {
+    const saved = localStorage.getItem('autopapers_history_records');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (err) {
+        console.error('Error restoring history records', err);
+      }
+    }
+    return INITIAL_HISTORY_RECORDS;
+  });
+
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(() => {
+    return localStorage.getItem('autopapers_active_history_id') || null;
+  });
+
+  // Synchronize historyRecords to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('autopapers_history_records', JSON.stringify(historyRecords));
+  }, [historyRecords]);
+
   // Automatically load saved workspace status from local storage on mount
   useEffect(() => {
     const savedParagraphs = localStorage.getItem('autopapers_paragraphs');
     const savedFilename = localStorage.getItem('autopapers_filename');
     const savedHasUploaded = localStorage.getItem('autopapers_has_uploaded');
+    const savedActiveId = localStorage.getItem('autopapers_active_history_id');
 
     if (savedParagraphs && savedFilename && savedHasUploaded === 'true') {
       try {
         setParagraphs(JSON.parse(savedParagraphs));
         setUploadedFilename(savedFilename);
         setHasUploaded(true);
+        if (savedActiveId) {
+          setActiveHistoryId(savedActiveId);
+        }
       } catch (err) {
         console.error('Error restoring workspace storage state', err);
       }
     }
   }, []);
+
+  // Synchronize workspace changes back to the active history record automatically
+  useEffect(() => {
+    if (activeHistoryId && paragraphs.length > 0) {
+      setHistoryRecords(prev => prev.map(rec => {
+        if (rec.id === activeHistoryId) {
+          const bodyParagraphs = paragraphs.filter(p => p.type === 'body');
+          const totalBody = bodyParagraphs.length;
+          const processedBody = bodyParagraphs.filter(p => p.finalText && p.finalText.length > 0).length;
+          const ratio = totalBody > 0 ? processedBody / totalBody : 0;
+          const newFinalRate = Math.round(rec.originalAigcRate - (rec.originalAigcRate - 12) * ratio);
+
+          return {
+            ...rec,
+            paragraphs: paragraphs,
+            finalAigcRate: Math.max(12, newFinalRate)
+          };
+        }
+        return rec;
+      }));
+    }
+    localStorage.setItem('autopapers_paragraphs', JSON.stringify(paragraphs));
+  }, [paragraphs, activeHistoryId]);
   // Dynamic progress calculator based on processed body paragraphs
   const getWorkspaceProgress = () => {
     const bodyParagraphs = paragraphs.filter(p => p.type === 'body');
@@ -327,7 +513,7 @@ export default function App() {
             return {
               ...p,
               finalText: match.finalText,
-              diffSegments: match.diffSegments
+              diffSegments: match.diffSegments || []
             };
           }
           return p;
@@ -350,13 +536,7 @@ export default function App() {
     }
   };
   
-  // Custom Paragraph Cards states for Workspace Diff View
-  const [paragraphs, setParagraphs] = useState<MockParagraph[]>(MOCK_AIGC_PARAGRAPHS);
-  const [paragraphViewModes, setParagraphViewModes] = useState<Record<number, 'diff' | 'final'>>({
-    43: 'diff',
-    44: 'diff'
-  });
-  const [regeneratingCards, setRegeneratingCards] = useState<Record<number, boolean>>({});
+
 
   // --- ACADEMIC POLISH STATES ---
   const [polishIntensity, setPolishIntensity] = useState<'light' | 'medium' | 'strong'>('medium');
@@ -455,6 +635,23 @@ export default function App() {
       setUploadStage('解析完毕，已成功渲染多维比对学术工作区！');
 
       setTimeout(() => {
+        const newRecordId = 'history_' + Date.now().toString();
+        const initialRate = Math.floor(Math.random() * 15) + 80; // 80% to 95%
+        const newRecord: HistoryRecord = {
+          id: newRecordId,
+          filename: data.filename,
+          originalAigcRate: initialRate,
+          finalAigcRate: initialRate,
+          uploadTime: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          pointsConsumed: Math.floor(data.paragraphs.length * 520) + 500,
+          paragraphs: data.paragraphs
+        };
+
+        // Add to history records state
+        setHistoryRecords(prev => [newRecord, ...prev]);
+        setActiveHistoryId(newRecordId);
+        localStorage.setItem('autopapers_active_history_id', newRecordId);
+
         setParagraphs(data.paragraphs);
         setUploadedFilename(data.filename);
         setIsUploading(false);
@@ -472,10 +669,12 @@ export default function App() {
     }
   };
 
-  // Reset Document Upload State
+  // Reset Document Upload State (Returning to History Lobby)
   const handleResetDocument = () => {
-    if (confirm('确认重置当前文档吗？这会清除所有本地已保存的改写进度。')) {
+    if (confirm('确认返回到历史文档列表大厅吗？\n您的所有段落微调与降重进度均已安全自动保存在历史记录中。')) {
       setHasUploaded(false);
+      setActiveHistoryId(null);
+      localStorage.removeItem('autopapers_active_history_id');
       setUploadProgress(0);
       setParagraphs(MOCK_AIGC_PARAGRAPHS);
       setUploadedFilename('基于Java的教务管理系统.docx');
@@ -488,7 +687,16 @@ export default function App() {
   };
 
   // Export edited JSON segment array back to a downloadable Microsoft Word Document
-  const handleExportWord = async () => {
+  // Supports custom paragraphs list, custom filename, and original vs. optimized drafts
+  const handleExportWord = async (customParagraphs?: MockParagraph[], customFilename?: string, isOriginal: boolean = false) => {
+    const targetParagraphs = customParagraphs || paragraphs;
+    const targetFilename = customFilename || uploadedFilename;
+
+    // If isOriginal is true, map paragraphs to clear finalText so API falls back to originalText
+    const processedParagraphs = isOriginal 
+      ? targetParagraphs.map(p => ({ ...p, finalText: '' }))
+      : targetParagraphs;
+
     try {
       const response = await fetch('/api/export', {
         method: 'POST',
@@ -496,8 +704,8 @@ export default function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          paragraphs,
-          filename: uploadedFilename
+          paragraphs: processedParagraphs,
+          filename: targetFilename
         }),
       });
 
@@ -511,9 +719,16 @@ export default function App() {
       const a = document.createElement('a');
       a.href = url;
       
-      const safeName = uploadedFilename.endsWith('.docx') 
-        ? uploadedFilename.replace('.docx', '_降AIGC后.docx') 
-        : `${uploadedFilename}_降AIGC后.docx`;
+      let safeName = targetFilename;
+      if (isOriginal) {
+        safeName = targetFilename.endsWith('.docx') 
+          ? targetFilename.replace('.docx', '_原稿.docx') 
+          : `${targetFilename}_原稿.docx`;
+      } else {
+        safeName = targetFilename.endsWith('.docx') 
+          ? targetFilename.replace('.docx', '_降AIGC后.docx') 
+          : `${targetFilename}_降AIGC后.docx`;
+      }
       a.download = safeName;
       document.body.appendChild(a);
       a.click();
@@ -521,6 +736,34 @@ export default function App() {
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
       alert(`Word 文档生成失败: ${err.message}`);
+    }
+  };
+
+  // Select a history record and load into active workspace
+  const handleSelectHistoryRecord = (rec: HistoryRecord) => {
+    setParagraphs(rec.paragraphs);
+    setUploadedFilename(rec.filename);
+    setActiveHistoryId(rec.id);
+    localStorage.setItem('autopapers_active_history_id', rec.id);
+    localStorage.setItem('autopapers_paragraphs', JSON.stringify(rec.paragraphs));
+    localStorage.setItem('autopapers_filename', rec.filename);
+    localStorage.setItem('autopapers_has_uploaded', 'true');
+    setHasUploaded(true);
+  };
+
+  // Delete a history record
+  const handleDeleteHistoryRecord = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('确认要彻底删除该条论文改写历史记录吗？（删除后本地进度将被永久清除）')) {
+      setHistoryRecords(prev => prev.filter(rec => rec.id !== id));
+      if (activeHistoryId === id) {
+        setHasUploaded(false);
+        setActiveHistoryId(null);
+        localStorage.removeItem('autopapers_active_history_id');
+        localStorage.removeItem('autopapers_paragraphs');
+        localStorage.removeItem('autopapers_filename');
+        localStorage.removeItem('autopapers_has_uploaded');
+      }
     }
   };
 
@@ -1233,48 +1476,228 @@ export default function App() {
                   
                   {/* State 1: Upload Drag zone */}
                   {!hasUploaded && !isUploading && (
-                    <div 
-                      onClick={triggerDocumentUploadSimulation}
-                      style={{
-                        border: '2px dashed rgba(223, 192, 151, 0.3)',
-                        borderRadius: '12px',
-                        padding: '60px 20px',
-                        textAlign: 'center',
-                        backgroundColor: 'rgba(223, 192, 151, 0.01)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--accent)';
-                        e.currentTarget.style.backgroundColor = 'rgba(223, 192, 151, 0.03)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(223, 192, 151, 0.3)';
-                        e.currentTarget.style.backgroundColor = 'rgba(223, 192, 151, 0.01)';
-                      }}
-                    >
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(223, 192, 151, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
-                        <FileText size={24} style={{ margin: '0 auto' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      {/* Compact Upload Area */}
+                      <div 
+                        onClick={triggerDocumentUploadSimulation}
+                        style={{
+                          border: '2px dashed rgba(223, 192, 151, 0.3)',
+                          borderRadius: '12px',
+                          padding: '36px 20px',
+                          textAlign: 'center',
+                          backgroundColor: 'rgba(223, 192, 151, 0.01)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--accent)';
+                          e.currentTarget.style.backgroundColor = 'rgba(223, 192, 151, 0.03)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(223, 192, 151, 0.3)';
+                          e.currentTarget.style.backgroundColor = 'rgba(223, 192, 151, 0.01)';
+                        }}
+                      >
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(223, 192, 151, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: 'var(--accent)' }}>
+                          <FileText size={20} style={{ margin: '0 auto' }} />
+                        </div>
+                        <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px' }}>
+                          拖拽 Word (.docx) 论文文档至此上传
+                        </h3>
+                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto' }}>
+                          系统将自动剔除大纲、公式、非正文及参考文献，仅对有效论文正文段落进行高精度分段 AIGC 痕迹降维改写。
+                        </p>
+                        <button style={{
+                          marginTop: '12px',
+                          backgroundColor: 'rgba(223, 192, 151, 0.1)',
+                          border: '1px solid var(--accent)',
+                          color: 'var(--accent)',
+                          borderRadius: '6px',
+                          padding: '5px 14px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}>
+                          选择本地文档
+                        </button>
                       </div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
-                        拖拽 Word (.docx) 论文文档至此上传
-                      </h3>
-                      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto' }}>
-                        系统将自动剔除大纲、公式、非正文及参考文献，仅对有效论文正文段落进行高精度分段 AIGC 痕迹降维改写。
-                      </p>
-                      <button style={{
-                        marginTop: '16px',
-                        backgroundColor: 'rgba(223, 192, 151, 0.1)',
-                        border: '1px solid var(--accent)',
-                        color: 'var(--accent)',
-                        borderRadius: '6px',
-                        padding: '6px 16px',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}>
-                        选择本地文档
-                      </button>
+
+                      {/* --- HISTORY LIST SECTION --- */}
+                      <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <h3 style={{ fontSize: '15px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                            <span style={{ color: 'var(--accent)' }}>📜</span> 历史人化生成记录 ({historyRecords.length})
+                          </h3>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            本地保存最近 30 天的改写进度
+                          </span>
+                        </div>
+
+                        {historyRecords.length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                            暂无历史文档，上传后将在此保存改写进度。
+                          </div>
+                        ) : (
+                          <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                              <thead>
+                                <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                  <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>文档名称</th>
+                                  <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '150px' }}>上传时间</th>
+                                  <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '160px' }}>AIGC 浓度变化</th>
+                                  <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '110px' }}>消耗点数</th>
+                                  <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '280px', textAlign: 'right' }}>操作</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {historyRecords.map((rec) => (
+                                  <tr 
+                                    key={rec.id} 
+                                    onClick={() => handleSelectHistoryRecord(rec)}
+                                    className="history-row"
+                                    style={{ 
+                                      borderBottom: '1px solid var(--border-light)', 
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FileText size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                                        <span style={{ 
+                                          overflow: 'hidden', 
+                                          textOverflow: 'ellipsis', 
+                                          whiteSpace: 'nowrap',
+                                          maxWidth: '240px' 
+                                        }} title={rec.filename}>
+                                          {rec.filename}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td style={{ padding: '14px 16px', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                                      {rec.uploadTime}
+                                    </td>
+                                    <td style={{ padding: '14px 16px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ 
+                                          fontSize: '11px', 
+                                          padding: '1px 6px', 
+                                          borderRadius: '4px', 
+                                          backgroundColor: 'rgba(255, 77, 79, 0.12)', 
+                                          color: '#ff4d4f',
+                                          border: '1px solid rgba(255, 77, 79, 0.2)'
+                                        }}>
+                                          {rec.originalAigcRate}%
+                                        </span>
+                                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>➔</span>
+                                        <span style={{ 
+                                          fontSize: '11px', 
+                                          padding: '1px 6px', 
+                                          borderRadius: '4px', 
+                                          backgroundColor: rec.finalAigcRate <= 20 ? 'rgba(82, 196, 26, 0.12)' : 'rgba(223, 192, 151, 0.15)', 
+                                          color: rec.finalAigcRate <= 20 ? '#52c41a' : 'var(--accent)',
+                                          border: rec.finalAigcRate <= 20 ? '1px solid rgba(82, 196, 26, 0.2)' : '1px solid rgba(223, 192, 151, 0.2)',
+                                          fontWeight: 'bold'
+                                        }}>
+                                          {rec.finalAigcRate}%
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td style={{ padding: '14px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                                      {rec.pointsConsumed.toLocaleString()} 点
+                                    </td>
+                                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                                        <button 
+                                          onClick={() => handleSelectHistoryRecord(rec)}
+                                          style={{
+                                            backgroundColor: 'rgba(223, 192, 151, 0.12)',
+                                            border: '1px solid var(--accent)',
+                                            color: 'var(--accent)',
+                                            borderRadius: '4px',
+                                            padding: '4px 10px',
+                                            fontSize: '11px',
+                                            cursor: 'pointer',
+                                            fontWeight: 'bold',
+                                            transition: 'all 0.2s'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'var(--accent)';
+                                            e.currentTarget.style.color = '#ffffff';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'rgba(223, 192, 151, 0.12)';
+                                            e.currentTarget.style.color = 'var(--accent)';
+                                          }}
+                                        >
+                                          进入工作区
+                                        </button>
+                                        <button 
+                                          onClick={() => handleExportWord(rec.paragraphs, rec.filename, true)}
+                                          style={{
+                                            backgroundColor: 'transparent',
+                                            border: '1px solid var(--border-light)',
+                                            color: 'var(--text-secondary)',
+                                            borderRadius: '4px',
+                                            padding: '4px 8px',
+                                            fontSize: '11px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                          }}
+                                          onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'}
+                                          onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
+                                          title="下载无修改原始文档"
+                                        >
+                                          ⬇️ 原稿
+                                        </button>
+                                        <button 
+                                          onClick={() => handleExportWord(rec.paragraphs, rec.filename, false)}
+                                          style={{
+                                            backgroundColor: 'transparent',
+                                            border: '1px solid var(--border-light)',
+                                            color: 'var(--accent)',
+                                            borderRadius: '4px',
+                                            padding: '4px 8px',
+                                            fontSize: '11px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                          }}
+                                          onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'}
+                                          onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
+                                          title="下载已人化降重文档"
+                                        >
+                                          ⬇️ 降重稿
+                                        </button>
+                                        <button 
+                                          onClick={(e) => handleDeleteHistoryRecord(rec.id, e)}
+                                          style={{
+                                            backgroundColor: 'transparent',
+                                            border: 'none',
+                                            color: '#ff4d4f',
+                                            fontSize: '11px',
+                                            cursor: 'pointer',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            borderRadius: '4px',
+                                            transition: 'all 0.2s'
+                                          }}
+                                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.08)'}
+                                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                          title="删除记录"
+                                        >
+                                          🗑️
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1307,6 +1730,31 @@ export default function App() {
                       {/* Document Toolbar Header Ribbon */}
                       <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-medium)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <button
+                            onClick={handleResetDocument}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid var(--border-light)',
+                              borderRadius: '6px',
+                              color: 'var(--text-secondary)',
+                              padding: '5px 12px',
+                              fontSize: '11.5px',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s',
+                              flexShrink: 0
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
+                          >
+                            ⬅️ 返回历史列表
+                          </button>
+
+                          <div style={{ borderLeft: '1px solid var(--border-light)', height: '20px', flexShrink: 0 }}></div>
+
                           <span style={{
                             fontSize: '11px',
                             backgroundColor: 'rgba(223, 192, 151, 0.15)',
@@ -1379,7 +1827,7 @@ export default function App() {
                           </button>
 
                           <button 
-                            onClick={handleExportWord}
+                            onClick={() => handleExportWord()}
                             style={{
                               backgroundColor: 'var(--accent)',
                               color: 'var(--bg-primary)',
@@ -2906,6 +3354,9 @@ export default function App() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        .history-row:hover {
+          background-color: rgba(223, 192, 151, 0.03) !important;
         }
       `}</style>
 
