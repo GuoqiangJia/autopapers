@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Shield, 
   Sparkles, 
@@ -205,6 +205,69 @@ export default function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState('');
   const [hasUploaded, setHasUploaded] = useState(false);
+  const [uploadedFilename, setUploadedFilename] = useState('基于Java的教务管理系统.docx');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Character-level Longest Common Subsequence (LCS) Diff calculator
+  const computeDiff = (oldStr: string, newStr: string): DiffSegment[] => {
+    const dp: number[][] = Array(oldStr.length + 1).fill(0).map(() => Array(newStr.length + 1).fill(0));
+    
+    for (let i = 1; i <= oldStr.length; i++) {
+      for (let j = 1; j <= newStr.length; j++) {
+        if (oldStr[i - 1] === newStr[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+
+    const segments: DiffSegment[] = [];
+    let i = oldStr.length;
+    let j = newStr.length;
+
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldStr[i - 1] === newStr[j - 1]) {
+        segments.unshift({ type: 'unchanged', text: oldStr[i - 1] });
+        i--;
+        j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        segments.unshift({ type: 'added', text: newStr[j - 1] });
+        j--;
+      } else {
+        segments.unshift({ type: 'removed', text: oldStr[i - 1] });
+        i--;
+      }
+    }
+
+    const merged: DiffSegment[] = [];
+    for (const seg of segments) {
+      if (merged.length > 0 && merged[merged.length - 1].type === seg.type) {
+        merged[merged.length - 1].text += seg.text;
+      } else {
+        merged.push(seg);
+      }
+    }
+
+    return merged;
+  };
+
+  // Automatically load saved workspace status from local storage on mount
+  useEffect(() => {
+    const savedParagraphs = localStorage.getItem('autopapers_paragraphs');
+    const savedFilename = localStorage.getItem('autopapers_filename');
+    const savedHasUploaded = localStorage.getItem('autopapers_has_uploaded');
+
+    if (savedParagraphs && savedFilename && savedHasUploaded === 'true') {
+      try {
+        setParagraphs(JSON.parse(savedParagraphs));
+        setUploadedFilename(savedFilename);
+        setHasUploaded(true);
+      } catch (err) {
+        console.error('Error restoring workspace storage state', err);
+      }
+    }
+  }, []);
   
   // Custom Paragraph Cards states for Workspace Diff View
   const [paragraphs, setParagraphs] = useState<MockParagraph[]>(MOCK_AIGC_PARAGRAPHS);
@@ -265,94 +328,151 @@ export default function App() {
     return () => clearInterval(interval);
   };
 
-  // Drag & Drop Document Upload Simulation
+  // Trigger file select hidden input click
   const triggerDocumentUploadSimulation = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Real Multi-part Document Upload and Mammoth Parsing handler
+  const handleRealDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadStage('正在加载并解析《基于Java的教务管理系统.docx》...');
-    
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        const next = prev + 5;
-        if (next === 30) {
-          setUploadStage('识别章节结构、非正文标题与目录过滤中...');
-        } else if (next === 65) {
-          setUploadStage('正在调配多机 GPU 学术模型并发计算行内 Diff 段落...');
-        } else if (next === 90) {
-          setUploadStage('计算完毕，渲染行内红绿 Diff 对照工作区...');
-        }
-        
-        if (next >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setIsUploading(false);
-            setHasUploaded(true);
-          }, 400);
-          return 100;
-        }
-        return next;
+    setUploadStage('正在加载并初始化本地 fileStream...');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      // Smooth dynamic progress simulation
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
       });
-    }, 100);
+
+      clearInterval(interval);
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || '文件上传解析异常');
+      }
+
+      const data = await response.json();
+      setUploadProgress(100);
+      setUploadStage('解析完毕，已成功渲染多维比对学术工作区！');
+
+      setTimeout(() => {
+        setParagraphs(data.paragraphs);
+        setUploadedFilename(data.filename);
+        setIsUploading(false);
+        setHasUploaded(true);
+
+        // Store to local persistent database (localStorage)
+        localStorage.setItem('autopapers_paragraphs', JSON.stringify(data.paragraphs));
+        localStorage.setItem('autopapers_filename', data.filename);
+        localStorage.setItem('autopapers_has_uploaded', 'true');
+      }, 400);
+
+    } catch (err: any) {
+      setIsUploading(false);
+      alert(`文档导入失败: ${err.message}`);
+    }
   };
 
-  // Reset Document Upload
+  // Reset Document Upload State
   const handleResetDocument = () => {
-    setHasUploaded(false);
-    setUploadProgress(0);
-    setParagraphs(MOCK_AIGC_PARAGRAPHS);
-    setParagraphViewModes({ 43: 'diff', 44: 'diff' });
+    if (confirm('确认重置当前文档吗？这会清除所有本地已保存的改写进度。')) {
+      setHasUploaded(false);
+      setUploadProgress(0);
+      setParagraphs(MOCK_AIGC_PARAGRAPHS);
+      setUploadedFilename('基于Java的教务管理系统.docx');
+      setParagraphViewModes({ 43: 'diff', 44: 'diff' });
+      
+      localStorage.removeItem('autopapers_paragraphs');
+      localStorage.removeItem('autopapers_filename');
+      localStorage.removeItem('autopapers_has_uploaded');
+    }
   };
 
-  // Card-specific Local Paragraph Regeneration Simulation
-  const handleRegenerateCard = (id: number) => {
+  // Export edited JSON segment array back to a downloadable Microsoft Word Document
+  const handleExportWord = async () => {
+    try {
+      const response = await fetch('/api/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paragraphs,
+          filename: uploadedFilename
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || '无法生成Word格式字节流');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const safeName = uploadedFilename.endsWith('.docx') 
+        ? uploadedFilename.replace('.docx', '_降AIGC后.docx') 
+        : `${uploadedFilename}_降AIGC后.docx`;
+      a.download = safeName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(`Word 文档生成失败: ${err.message}`);
+    }
+  };
+
+  // Card-specific Real Paragraph Regeneration utilizing Google Gemini Edge endpoint
+  const handleRegenerateCard = async (id: number) => {
+    const cardParagraph = paragraphs.find(p => p.id === id);
+    if (!cardParagraph) return;
+
     setRegeneratingCards(prev => ({ ...prev, [id]: true }));
-    
-    setTimeout(() => {
+
+    try {
+      const response = await fetch('/api/humanize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          originalText: cardParagraph.originalText
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || '接口通信失败');
+      }
+
+      const data = await response.json();
+      const newlyRegeneratedText = data.humanizedText;
+      const newlyDiffSegments = computeDiff(cardParagraph.originalText, newlyRegeneratedText);
+
       setParagraphs(prevParagraphs => {
-        return prevParagraphs.map(p => {
+        const nextList = prevParagraphs.map(p => {
           if (p.id === id) {
-            let newlyRegeneratedText = '';
-            let newlyDiffSegments: DiffSegment[] = [];
-            
-            if (id === 43) {
-              newlyRegeneratedText = '时代演进对当前高校教务数字化进程赋予了更高的时效标准。如今面对急速扩张的校区学生体量，纯粹依靠传统手工登记排班模式早已不敷使用，当然对手工班组能提供微调，但欲匹配多维度教学排课的效率指标，必须立足于高性能教务系统的迭代演进。';
-              newlyDiffSegments = [
-                { type: 'unchanged', text: '时代' },
-                { type: 'removed', text: '进步也给人们提出新的要求' },
-                { type: 'added', text: '演进对当前高校教务数字化进程赋予了更高的时效标准' },
-                { type: 'unchanged', text: '。如今面对' },
-                { type: 'removed', text: '科技和网络飞速发展，教务信息系统已经' },
-                { type: 'added', text: '急速扩张的校区学生体量，纯粹依靠传统' },
-                { type: 'unchanged', text: '手工登记排班模式' },
-                { type: 'removed', text: '来完成工作，当然表格对于小型的教研组较为合适' },
-                { type: 'added', text: '早已不敷使用，当然对手工班组能提供微调' },
-                { type: 'unchanged', text: '，但欲匹配' },
-                { type: 'removed', text: '现代高校教务排课效率' },
-                { type: 'added', text: '多维度教学排课的效率指标' },
-                { type: 'unchanged', text: '，必须' },
-                { type: 'removed', text: '引进更加高吞吐集约化的系统' },
-                { type: 'added', text: '立足于高性能教务系统的迭代演进' },
-                { type: 'unchanged', text: '。' }
-              ];
-            } else {
-              newlyRegeneratedText = '并发选课效率作为系统吞吐量的核心，其响应速度直接影响数字化校园的使用体验。开发班组需要严格审视课程分配及锁并发冲突。先前通过人工排查极易造成数据库死锁和延迟，无法对系统负载进行全局统配。由此，基于微服务高内聚调配的多主协同选课调度模型，动态均衡各节点查询流，将业务流程实现清晰编排，对数据管理起到了前瞻作用。';
-              newlyDiffSegments = [
-                { type: 'unchanged', text: '并发' },
-                { type: 'removed', text: '选课响应极大地影响到校园体验' },
-                { type: 'added', text: '选课效率作为系统吞吐量的核心，其响应速度直接影响数字化校园的使用体验' },
-                { type: 'unchanged', text: '。开发' },
-                { type: 'removed', text: '班组需要处理大量录入，也要考虑选课并发冲突' },
-                { type: 'added', text: '班组需要严格审视课程分配及锁并发冲突' },
-                { type: 'unchanged', text: '。先前通过' },
-                { type: 'removed', text: '人工表格极易出错，无法掌握真实库容' },
-                { type: 'added', text: '人工排查极易造成数据库死锁和延迟，无法对系统负载进行全局统配' },
-                { type: 'unchanged', text: '。由此，基于' },
-                { type: 'removed', text: '多主节点自动调配负载，使得流程十分清晰，规避崩溃' },
-                { type: 'added', text: '微服务高内聚调配的多主协同选课调度模型，动态均衡各节点查询流，将业务流程实现清晰编排，对数据管理起到了前瞻作用' },
-                { type: 'unchanged', text: '。' }
-              ];
-            }
-            
             return {
               ...p,
               finalText: newlyRegeneratedText,
@@ -361,9 +481,17 @@ export default function App() {
           }
           return p;
         });
+
+        // Store updated progress array to local storage to protect data loss on refresh
+        localStorage.setItem('autopapers_paragraphs', JSON.stringify(nextList));
+        return nextList;
       });
+
+    } catch (err: any) {
+      alert(`单段重构失败: ${err.message}`);
+    } finally {
       setRegeneratingCards(prev => ({ ...prev, [id]: false }));
-    }, 1200);
+    }
   };
 
   // Toggle single card viewMode
@@ -609,6 +737,14 @@ export default function App() {
       maxWidth: '100vw',
       overflowX: 'hidden'
     }}>
+      {/* Hidden native Word file input element */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleRealDocumentUpload} 
+        accept=".docx" 
+        style={{ display: 'none' }} 
+      />
       
       {/* ==========================================
           SIDEBAR: Premium Navigation Menu
@@ -1115,7 +1251,7 @@ export default function App() {
                           
                           {/* File Name */}
                           <div style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--text-primary)' }}>
-                            基于Java的教务管理系统_降AIGC后.docx
+                            {uploadedFilename}
                           </div>
                         </div>
 
@@ -1145,20 +1281,23 @@ export default function App() {
                             重置
                           </button>
 
-                          <button style={{
-                            backgroundColor: 'var(--accent)',
-                            color: 'var(--bg-primary)',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 20px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            boxShadow: '0 0 10px var(--accent-glow)'
-                          }}>
+                          <button 
+                            onClick={handleExportWord}
+                            style={{
+                              backgroundColor: 'var(--accent)',
+                              color: 'var(--bg-primary)',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '8px 20px',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 0 10px var(--accent-glow)'
+                            }}
+                          >
                             <Download size={14} /> 下载改写结果 (.docx)
                           </button>
                         </div>
