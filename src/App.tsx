@@ -1727,124 +1727,159 @@ export default function App() {
                   {hasUploaded && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       
-                      {/* Document Toolbar Header Ribbon */}
-                      <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-medium)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                          <button
-                            onClick={handleResetDocument}
-                            style={{
-                              background: 'rgba(255, 255, 255, 0.04)',
-                              border: '1px solid var(--border-light)',
+                      {/* Document Toolbar Header Ribbon (Redesigned 2-Tier Masterpiece) */}
+                      <div className="glass-panel" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '20px', borderBottom: '1px solid var(--border-medium)' }}>
+                        {/* Tier 1: Top Navigation Bar */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                          {/* Left: Back button & Document Title */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0, flex: 1 }}>
+                            <button
+                              onClick={handleResetDocument}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.06)',
+                                border: '1px solid var(--border-light)',
+                                borderRadius: '8px',
+                                color: 'var(--text-secondary)',
+                                padding: '6px 14px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s',
+                                flexShrink: 0
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--accent)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border-light)';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                              }}
+                            >
+                              ⬅️ 返回历史列表
+                            </button>
+
+                            <div style={{ borderLeft: '1px solid var(--border-light)', height: '22px', flexShrink: 0 }}></div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                              <FileText size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                              <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '380px' }} title={uploadedFilename}>
+                                {uploadedFilename}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Mode Badges */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                            <span style={{
+                              fontSize: '11px',
+                              backgroundColor: 'rgba(223, 192, 151, 0.15)',
+                              color: 'var(--accent)',
+                              padding: '3px 10px',
                               borderRadius: '6px',
-                              color: 'var(--text-secondary)',
-                              padding: '5px 12px',
-                              fontSize: '11.5px',
-                              cursor: 'pointer',
                               fontWeight: 'bold',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              transition: 'all 0.2s',
-                              flexShrink: 0
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'}
-                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
-                          >
-                            ⬅️ 返回历史列表
-                          </button>
-
-                          <div style={{ borderLeft: '1px solid var(--border-light)', height: '20px', flexShrink: 0 }}></div>
-
-                          <span style={{
-                            fontSize: '11px',
-                            backgroundColor: 'rgba(223, 192, 151, 0.15)',
-                            color: 'var(--accent)',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                            border: '1px solid rgba(223, 192, 151, 0.2)'
-                          }}>
-                            降AIGC率
-                          </span>
-                          <span style={{
-                            fontSize: '11px',
-                            backgroundColor: 'rgba(82, 196, 26, 0.15)',
-                            color: '#52c41a',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                            border: '1px solid rgba(82, 196, 26, 0.2)'
-                          }}>
-                            深度人化
-                          </span>
-                          
-                          {/* File Name */}
-                          <div style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--text-primary)' }}>
-                            {uploadedFilename}
+                              border: '1px solid rgba(223, 192, 151, 0.25)'
+                            }}>
+                              降AIGC率
+                            </span>
+                            <span style={{
+                              fontSize: '11px',
+                              backgroundColor: 'rgba(82, 196, 26, 0.15)',
+                              color: '#52c41a',
+                              padding: '3px 10px',
+                              borderRadius: '6px',
+                              fontWeight: 'bold',
+                              border: '1px solid rgba(82, 196, 26, 0.25)'
+                            }}>
+                              深度人化
+                            </span>
                           </div>
                         </div>
 
-                        {/* Metadata stats */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', flexShrink: 0 }}>
-                            消耗点数: <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>6,805 点</strong>
-                          </span>
-                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                            处理进度: 
-                            <span style={{ display: 'inline-block', width: '80px', height: '6px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                              <span style={{ display: 'block', width: `${getWorkspaceProgress()}%`, height: '100%', backgroundColor: 'var(--accent)', transition: 'width 0.3s ease' }}></span>
-                            </span>
-                            <strong style={{ color: 'var(--accent)' }}>{getWorkspaceProgress()}%</strong>
-                          </span>
+                        {/* Separator Line */}
+                        <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)', width: '100%' }}></div>
 
-                          <button 
-                            onClick={handleResetDocument}
-                            style={{
-                              background: 'rgba(255, 77, 79, 0.05)',
-                              border: '1px solid rgba(255, 77, 79, 0.15)',
-                              borderRadius: '6px',
-                              color: '#ff4d4f',
-                              padding: '5px 12px',
-                              fontSize: '11px',
-                              cursor: 'pointer',
-                              fontWeight: 'bold',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              flexShrink: 0,
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.12)';
-                              e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.3)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.05)';
-                              e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.15)';
-                            }}
-                          >
-                            <RefreshCw size={11} /> 重置文档
-                          </button>
+                        {/* Tier 2: Bottom Telemetry Stats & Action Controls */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                          {/* Left: Telemetry Dashboard stats */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>算力消耗:</span>
+                              <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: '14px', backgroundColor: 'rgba(223, 192, 151, 0.08)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(223, 192, 151, 0.15)' }}>6,805 点</strong>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>处理进度:</span>
+                              <span style={{ display: 'inline-block', width: '100px', height: '8px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                                <span style={{ display: 'block', width: `${getWorkspaceProgress()}%`, height: '100%', backgroundColor: 'var(--accent)', transition: 'width 0.3s ease' }}></span>
+                              </span>
+                              <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>{getWorkspaceProgress()}%</strong>
+                            </div>
+                          </div>
 
-                          <button 
-                            onClick={() => handleExportWord()}
-                            style={{
-                              backgroundColor: 'var(--accent)',
-                              color: 'var(--bg-primary)',
-                              border: 'none',
-                              borderRadius: '6px',
-                              padding: '8px 20px',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              boxShadow: '0 0 10px var(--accent-glow)'
-                            }}
-                          >
-                            <Download size={14} /> 下载改写结果 (.docx)
-                          </button>
+                          {/* Right: Actions */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <button 
+                              onClick={handleResetDocument}
+                              style={{
+                                background: 'rgba(255, 77, 79, 0.06)',
+                                border: '1px solid rgba(255, 77, 79, 0.2)',
+                                borderRadius: '8px',
+                                color: '#ff4d4f',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.15)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.4)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.06)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.2)';
+                              }}
+                            >
+                              <RefreshCw size={12} /> 重置文档
+                            </button>
+
+                            <button 
+                              onClick={() => handleExportWord()}
+                              style={{
+                                backgroundColor: 'var(--accent)',
+                                color: 'var(--bg-primary)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '10px 24px',
+                                fontSize: '13px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                boxShadow: '0 4px 16px var(--accent-glow)',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'none';
+                                e.currentTarget.style.boxShadow = '0 4px 16px var(--accent-glow)';
+                              }}
+                            >
+                              <Download size={16} /> 下载改写结果 (.docx)
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -2314,61 +2349,156 @@ export default function App() {
                   {hasUploaded && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       
-                      {/* Ribbon */}
-                      <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-medium)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                          <span style={{
-                            fontSize: '11px',
-                            backgroundColor: 'rgba(255, 77, 79, 0.15)',
-                            color: '#ff4d4f',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                            border: '1px solid rgba(255, 77, 79, 0.2)'
-                          }}>
-                            知网查重
-                          </span>
-                          <span style={{
-                            fontSize: '11px',
-                            backgroundColor: 'rgba(82, 196, 26, 0.15)',
-                            color: '#52c41a',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                            border: '1px solid rgba(82, 196, 26, 0.2)'
-                          }}>
-                            自动降重
-                          </span>
-                          <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
-                            基于Java的教务管理系统_知网查重后.docx
+                      {/* Ribbon Header Toolbar (Redesigned 2-Tier Masterpiece) */}
+                      <div className="glass-panel" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '20px', borderBottom: '1px solid var(--border-medium)' }}>
+                        {/* Tier 1: Top Navigation Bar */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                          {/* Left: Back button & Document Title */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0, flex: 1 }}>
+                            <button
+                              onClick={handleResetDocument}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.06)',
+                                border: '1px solid var(--border-light)',
+                                borderRadius: '8px',
+                                color: 'var(--text-secondary)',
+                                padding: '6px 14px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s',
+                                flexShrink: 0
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--accent)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border-light)';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                              }}
+                            >
+                              ⬅️ 返回历史列表
+                            </button>
+
+                            <div style={{ borderLeft: '1px solid var(--border-light)', height: '22px', flexShrink: 0 }}></div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                              <FileText size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                              <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '380px' }} title="基于Java的教务管理系统_知网查重后.docx">
+                                基于Java的教务管理系统_知网查重后.docx
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Mode Badges */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                            <span style={{
+                              fontSize: '11px',
+                              backgroundColor: 'rgba(255, 77, 79, 0.15)',
+                              color: '#ff4d4f',
+                              padding: '3px 10px',
+                              borderRadius: '6px',
+                              fontWeight: 'bold',
+                              border: '1px solid rgba(255, 77, 79, 0.25)'
+                            }}>
+                              知网查重
+                            </span>
+                            <span style={{
+                              fontSize: '11px',
+                              backgroundColor: 'rgba(82, 196, 26, 0.15)',
+                              color: '#52c41a',
+                              padding: '3px 10px',
+                              borderRadius: '6px',
+                              fontWeight: 'bold',
+                              border: '1px solid rgba(82, 196, 26, 0.25)'
+                            }}>
+                              自动降重
+                            </span>
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                          <span style={{ fontSize: '13px' }}>
-                            检测重复率: <strong style={{ color: '#ff4d4f', fontFamily: 'var(--font-mono)' }}>34.5% ➔ 8.2%</strong>
-                          </span>
-                          <button 
-                            onClick={handleResetDocument}
-                            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer' }}
-                          >
-                            关闭
-                          </button>
-                          <button style={{
-                            backgroundColor: 'var(--accent)',
-                            color: 'var(--bg-primary)',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 20px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}>
-                            <Download size={14} /> 一键导出降重版文档 (.docx)
-                          </button>
+                        {/* Separator Line */}
+                        <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)', width: '100%' }}></div>
+
+                        {/* Tier 2: Bottom Telemetry Stats & Action Controls */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                          {/* Left: Telemetry Dashboard stats */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>算力消耗:</span>
+                              <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: '14px', backgroundColor: 'rgba(223, 192, 151, 0.08)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(223, 192, 151, 0.15)' }}>6,805 点</strong>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>检测重复率:</span>
+                              <strong style={{ color: '#ff4d4f', fontFamily: 'var(--font-mono)', fontSize: '14px', backgroundColor: 'rgba(255, 77, 79, 0.08)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(255, 77, 79, 0.15)' }}>34.5% ➔ 8.2%</strong>
+                            </div>
+                          </div>
+
+                          {/* Right: Actions */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <button 
+                              onClick={handleResetDocument}
+                              style={{
+                                background: 'rgba(255, 77, 79, 0.06)',
+                                border: '1px solid rgba(255, 77, 79, 0.2)',
+                                borderRadius: '8px',
+                                color: '#ff4d4f',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.15)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.4)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.06)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.2)';
+                              }}
+                            >
+                              <RefreshCw size={12} /> 关闭工作区
+                            </button>
+
+                            <button 
+                              onClick={() => handleExportWord()}
+                              style={{
+                                backgroundColor: 'var(--accent)',
+                                color: 'var(--bg-primary)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '10px 24px',
+                                fontSize: '13px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                boxShadow: '0 4px 16px var(--accent-glow)',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'none';
+                                e.currentTarget.style.boxShadow = '0 4px 16px var(--accent-glow)';
+                              }}
+                            >
+                              <Download size={16} /> 一键导出降重版文档 (.docx)
+                            </button>
+                          </div>
                         </div>
                       </div>
 
