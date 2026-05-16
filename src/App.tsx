@@ -319,9 +319,11 @@ export default function App() {
 
   // --- AIGC REDUCER: QUICK MODE STATES ---
   const [aigcTextQuick, setAigcTextQuick] = useState(INITIAL_AIGC_TEXT_QUICK);
-  const [aigcRateQuick, setAigcRateQuick] = useState(85);
+  const [originalAigcRateQuick, setOriginalAigcRateQuick] = useState<number | null>(null);
+  const [aigcRateQuick, setAigcRateQuick] = useState<number | null>(null);
   const [isHumanizingQuick, setIsHumanizingQuick] = useState(false);
   const [humanizedTextQuick, setHumanizedTextQuick] = useState('');
+  const [agentStatus, setAgentStatus] = useState('');
 
   // --- PLAGIARISM REDUCER: QUICK MODE STATES ---
   const [plagTextQuick, setPlagTextQuick] = useState(INITIAL_PLAGIARISM_TEXT_QUICK);
@@ -1084,6 +1086,8 @@ export default function App() {
         style={{ display: 'none' }} 
       />
       
+      
+
       {/* ==========================================
           SIDEBAR: Premium Navigation Menu
           ========================================== */}
@@ -1385,15 +1389,21 @@ export default function App() {
 
                   {/* Editors */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
-                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>待降 AI感原稿</span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {aigcTextQuick.length}</span>
+                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '500px', border: '1px solid var(--border-light)' }}>
+                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>转换前原文</span>
+                        <button 
+                          onClick={() => navigator.clipboard.writeText(aigcTextQuick)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
+                        >
+                          <Copy size={12} /> 复制原文
+                        </button>
                       </div>
                       <div style={{ padding: '16px', flex: 1 }}>
                         <textarea
                           value={aigcTextQuick}
                           onChange={(e) => setAigcTextQuick(e.target.value)}
+                          placeholder="粘贴原稿段落..."
                           style={{
                             width: '100%',
                             height: '100%',
@@ -1408,75 +1418,114 @@ export default function App() {
                           }}
                         />
                       </div>
+                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {aigcTextQuick.length}</span>
+                      </div>
                     </div>
 
-                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
-                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>人化后输出区 (AI感：{aigcRateQuick}%)</span>
-                        {humanizedTextQuick && (
-                          <button 
-                            onClick={() => navigator.clipboard.writeText(humanizedTextQuick)}
-                            style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          >
-                            <Copy size={12} /> 复制
-                          </button>
-                        )}
+                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '500px', border: '1px solid var(--border-light)' }}>
+                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>转换后结果</span>
+                        <button 
+                          onClick={() => navigator.clipboard.writeText(humanizedTextQuick)}
+                          disabled={!humanizedTextQuick}
+                          style={{ 
+                            background: 'transparent', 
+                            border: 'none', 
+                            color: humanizedTextQuick ? 'var(--accent)' : 'var(--text-muted)', 
+                            fontSize: '11px', 
+                            cursor: humanizedTextQuick ? 'pointer' : 'not-allowed', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '4px', 
+                            fontWeight: 'bold',
+                            opacity: humanizedTextQuick ? 1 : 0.5
+                          }}
+                        >
+                          <Copy size={12} /> 复制结果
+                        </button>
                       </div>
                       <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
                         {isHumanizingQuick ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                             <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '28px', height: '28px', animation: 'spin 1s linear infinite' }} />
-                            <span style={{ fontSize: '12px', color: 'var(--accent)' }}>智能体正在进行上下文语义降维，去除AI感...</span>
                           </div>
                         ) : humanizedTextQuick ? (
                           <div style={{ lineHeight: '1.8', fontSize: '14px', color: 'var(--accent-text)', whiteSpace: 'pre-wrap' }}>
                             {humanizedTextQuick}
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '13px' }}>
-                            点击“一键消除 AIGC 痕迹”按钮，调用学者改写网络。
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
+                            等待降重执行...
                           </div>
                         )}
+                      </div>
+                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {humanizedTextQuick.length}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Centered Premium Pill Action Button linking input & output */}
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px' }}>
-                    <button
-                      onClick={handleHumanizeQuick}
-                      disabled={isHumanizingQuick}
-                      style={{
-                        backgroundColor: 'var(--accent)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '24px',
-                        padding: '12px 40px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        cursor: isHumanizingQuick ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 8px 24px var(--accent-glow)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isHumanizingQuick) {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 12px 28px var(--accent-glow)';
-                          e.currentTarget.style.opacity = '0.95';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'none';
-                        e.currentTarget.style.boxShadow = '0 8px 24px var(--accent-glow)';
-                        e.currentTarget.style.opacity = '1';
-                      }}
-                    >
-                      <Sparkles size={16} />
-                      {isHumanizingQuick ? '正在智能重构学术笔触...' : '一键降低AI感'}
-                    </button>
+                  {/* Status & Dashboard Action Area */}
+                  <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+                    {agentStatus && (
+                      <div style={{ fontSize: '12px', color: 'var(--accent)', fontStyle: 'italic', opacity: 0.8, marginBottom: '4px' }}>
+                        {agentStatus}
+                      </div>
+                    )}
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '60px' }}>
+                      {/* Left Score: Before */}
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>PRE-SCAN AI感</div>
+                        <div style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                          {originalAigcRateQuick !== null ? originalAigcRateQuick + '%' : '--'}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleHumanizeQuick}
+                        disabled={isHumanizingQuick}
+                        style={{
+                          backgroundColor: 'var(--accent)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '30px',
+                          padding: '16px 48px',
+                          fontSize: '15px',
+                          fontWeight: 'bold',
+                          cursor: isHumanizingQuick ? 'not-allowed' : 'pointer',
+                          boxShadow: '0 8px 32px var(--accent-glow)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isHumanizingQuick) {
+                            e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 12px 40px var(--accent-glow)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'none';
+                          e.currentTarget.style.boxShadow = '0 8px 32px var(--accent-glow)';
+                        }}
+                      >
+                        <Sparkles size={18} />
+                        {isHumanizingQuick ? '正在智能重构...' : '一键降低AI感'}
+                      </button>
+
+                      {/* Right Score: After */}
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--accent)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>POST-HUMAN AI感</div>
+                        <div style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
+                          {aigcRateQuick !== null ? aigcRateQuick + '%' : '--'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                 </div>
