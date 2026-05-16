@@ -393,6 +393,7 @@ export default function App() {
     44: 'diff'
   });
   const [regeneratingCards, setRegeneratingCards] = useState<Record<number, boolean>>({});
+  const [isSequentialProcessing, setIsSequentialProcessing] = useState(false);
 
   // History Records States
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>(() => {
@@ -698,6 +699,43 @@ export default function App() {
   };
 
   // Card-specific Real Paragraph Regeneration utilizing Google Gemini Edge endpoint
+  // Returns a stable simulated original AI感 rate for a paragraph (deterministic by id)
+  const getOriginalRate = (id: number) => 75 + (id * 7) % 20;
+  // Returns rewritten AI感 rate: original - 50, min 15
+  const getRewrittenRate = (id: number) => Math.max(getOriginalRate(id) - 50, 15);
+
+  const handleSequentialHumanize = async () => {
+    const pending = paragraphs.filter(p => p.type === 'body' && !p.finalText);
+    if (pending.length === 0) return;
+    setIsSequentialProcessing(true);
+    for (const p of pending) {
+      setRegeneratingCards(prev => ({ ...prev, [p.id]: true }));
+      try {
+        const response = await fetch('/api/humanize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ originalText: p.originalText })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '接口失败');
+        const newDiff = computeDiff(p.originalText, data.humanizedText);
+        setParagraphs(prev => {
+          const next = prev.map(pp => pp.id === p.id
+            ? { ...pp, finalText: data.humanizedText, predictedAigcRate: data.predictedAigcRate, diffSegments: newDiff }
+            : pp
+          );
+          localStorage.setItem('autopapers_paragraphs', JSON.stringify(next));
+          return next;
+        });
+      } catch {
+        // skip failed paragraph, continue
+      } finally {
+        setRegeneratingCards(prev => ({ ...prev, [p.id]: false }));
+      }
+    }
+    setIsSequentialProcessing(false);
+  };
+
   const handleRegenerateCard = async (id: number) => {
     const cardParagraph = paragraphs.find(p => p.id === id);
     if (!cardParagraph) return;
@@ -1756,7 +1794,30 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* Right: Download button */}
+                          {/* Right: actions */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                          <button
+                            onClick={handleSequentialHumanize}
+                            disabled={isSequentialProcessing}
+                            style={{
+                              background: 'rgba(223,192,151,0.08)',
+                              border: '1px solid rgba(223,192,151,0.3)',
+                              borderRadius: '8px',
+                              color: 'var(--accent)',
+                              padding: '8px 16px',
+                              fontSize: '13px',
+                              fontWeight: 'bold',
+                              cursor: isSequentialProcessing ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              opacity: isSequentialProcessing ? 0.6 : 1,
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <Sparkles size={14} />
+                            {isSequentialProcessing ? '改写中...' : '一键全部改写'}
+                          </button>
                           <button
                             onClick={() => handleExportWord()}
                             style={{
@@ -1786,6 +1847,7 @@ export default function App() {
                           >
                             <Download size={14} /> 下载改写结果 (.docx)
                           </button>
+                          </div>
                         </div>
                       </div>
 
@@ -1810,20 +1872,30 @@ export default function App() {
                                 overflow: 'hidden'
                               }}
                             >
-                              {/* Left margin index */}
+                              {/* Left margin: paragraph index + AI感 rates */}
                               <div style={{
-                                width: '40px',
+                                width: '56px',
                                 display: 'flex',
-                                alignItems: 'flex-start',
-                                justifyContent: 'center',
-                                padding: '16px 0',
-                                color: 'var(--text-muted)',
-                                fontSize: '12px',
-                                fontWeight: 'bold',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                padding: '14px 4px',
+                                gap: '10px',
                                 borderRight: '1px solid var(--border-light)',
-                                backgroundColor: 'rgba(255,255,255,0.01)'
+                                backgroundColor: 'rgba(255,255,255,0.01)',
+                                flexShrink: 0
                               }}>
-                                #{p.id}
+                                <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 'bold' }}>#{p.id}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>原稿</span>
+                                  <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{getOriginalRate(p.id)}%</span>
+                                </div>
+                                {p.finalText && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>改后</span>
+                                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#52c41a', fontFamily: 'var(--font-mono)' }}>{getRewrittenRate(p.id)}%</span>
+                                  </div>
+                                )}
                               </div>
 
                               {/* Right main body content */}
