@@ -1174,7 +1174,7 @@ export default function App() {
           {/* Navigation Items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {[
-              { id: 'aigc', label: '降低AIGC率', desc: 'AIGC Humanizer', icon: Shield, badge: '核心' },
+              { id: 'aigc', label: '降低AI感', desc: 'AI-feel Humanizer', icon: Shield, badge: '核心' },
               { id: 'plagiarism', label: '降低重复率', desc: 'Similarity Shield', icon: TrendingDown },
               { id: 'polish', label: '学术润色', desc: 'Academic Polish', icon: Sparkles },
               { id: 'layout', label: '格式排版', desc: 'Layout & GB/T7714', icon: FileText },
@@ -1274,7 +1274,7 @@ export default function App() {
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>工作台</span>
             <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              {activeTab === 'aigc' && '1. 降低AIGC率 (AIGC Humanizer)'}
+              {activeTab === 'aigc' && '1. 降低AI感 (AI-feel Humanizer)'}
               {activeTab === 'plagiarism' && '2. 降低重复率 (Similarity Shield)'}
               {activeTab === 'polish' && '3. 学术润色 (Academic Polish)'}
               {activeTab === 'layout' && '4. 格式排版 (Layout & GB/T7714)'}
@@ -1328,7 +1328,7 @@ export default function App() {
         <div style={{ padding: '32px', maxWidth: '1200px', width: '100%', margin: '0 auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           {/* ==========================================
-              TAB PANEL: 降低AIGC率 (AIGC Reducer)
+              TAB PANEL: 降低AI感 (AI-feel Reducer)
               ========================================== */}
           {activeTab === 'aigc' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
