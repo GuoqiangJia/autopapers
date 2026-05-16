@@ -1838,126 +1838,37 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* Right: Mode Badges */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                            <span style={{
-                              fontSize: '11px',
-                              backgroundColor: 'rgba(223, 192, 151, 0.15)',
-                              color: 'var(--accent)',
-                              padding: '3px 10px',
-                              borderRadius: '6px',
+                          {/* Right: Download button */}
+                          <button
+                            onClick={() => handleExportWord()}
+                            style={{
+                              backgroundColor: 'var(--accent)',
+                              color: 'var(--bg-primary)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '8px 18px',
+                              fontSize: '13px',
                               fontWeight: 'bold',
-                              border: '1px solid rgba(223, 192, 151, 0.25)'
-                            }}>
-                              降AIGC率
-                            </span>
-                            <span style={{
-                              fontSize: '11px',
-                              backgroundColor: 'rgba(82, 196, 26, 0.15)',
-                              color: '#52c41a',
-                              padding: '3px 10px',
-                              borderRadius: '6px',
-                              fontWeight: 'bold',
-                              border: '1px solid rgba(82, 196, 26, 0.25)'
-                            }}>
-                              深度人化
-                            </span>
-                          </div>
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              boxShadow: '0 4px 16px var(--accent-glow)',
+                              transition: 'all 0.2s',
+                              flexShrink: 0
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                              e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'none';
+                              e.currentTarget.style.boxShadow = '0 4px 16px var(--accent-glow)';
+                            }}
+                          >
+                            <Download size={14} /> 下载改写结果 (.docx)
+                          </button>
                         </div>
-
-                        {/* Separator Line */}
-                        <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)', width: '100%' }}></div>
-
-                        {/* Tier 2: Bottom Telemetry Stats & Action Controls */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                          {/* Left: Telemetry Dashboard stats */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>算力消耗:</span>
-                              <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: '14px', backgroundColor: 'rgba(223, 192, 151, 0.08)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(223, 192, 151, 0.15)' }}>6,805 点</strong>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>处理进度:</span>
-                              <span style={{ display: 'inline-block', width: '100px', height: '8px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
-                                <span style={{ display: 'block', width: `${getWorkspaceProgress()}%`, height: '100%', backgroundColor: 'var(--accent)', transition: 'width 0.3s ease' }}></span>
-                              </span>
-                              <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>{getWorkspaceProgress()}%</strong>
-                            </div>
-                          </div>
-
-                          {/* Right: Actions */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <button
-                              onClick={handleResetDocument}
-                              style={{
-                                background: 'rgba(255, 77, 79, 0.06)',
-                                border: '1px solid rgba(255, 77, 79, 0.2)',
-                                borderRadius: '8px',
-                                color: '#ff4d4f',
-                                padding: '8px 16px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.15)';
-                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.4)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.06)';
-                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.2)';
-                              }}
-                            >
-                              <RefreshCw size={12} /> 重置文档
-                            </button>
-
-                            <button
-                              onClick={() => handleExportWord()}
-                              style={{
-                                backgroundColor: 'var(--accent)',
-                                color: 'var(--bg-primary)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '10px 24px',
-                                fontSize: '13px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                boxShadow: '0 4px 16px var(--accent-glow)',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'none';
-                                e.currentTarget.style.boxShadow = '0 4px 16px var(--accent-glow)';
-                              }}
-                            >
-                              <Download size={16} /> 下载改写结果 (.docx)
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Header filter warning alert block */}
-                      <div className="glass-panel" style={{ padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                          ⚠️ 系统已过滤非正文（标题、大纲目录、参考文献等），默认保持不改写以护航文章格式。
-                        </span>
-                        <span
-                          onClick={handleBatchHumanize}
-                          style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
-                        >
-                          ✍️ 免费强制全部改写
-                        </span>
                       </div>
 
                       {/* Parallel comparisons stack cards */}
@@ -1967,30 +1878,7 @@ export default function App() {
                           const viewMode = paragraphViewModes[p.id] || 'diff';
 
                           if (p.type === 'header') {
-                            return (
-                              <div
-                                key={p.id}
-                                style={{
-                                  display: 'flex',
-                                  backgroundColor: 'rgba(255,255,255,0.01)',
-                                  border: '1px solid var(--border-light)',
-                                  borderRadius: '8px',
-                                  padding: '16px'
-                                }}
-                              >
-                                <div style={{ width: '36px', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold' }}>
-                                  #{p.id}
-                                </div>
-                                <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 'bold' }}>
-                                    非正文 (大纲标题)： {p.originalText}
-                                  </span>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                    已过滤不予改写 (保护原有格式)
-                                  </span>
-                                </div>
-                              </div>
-                            );
+                            return null;
                           }
 
                           return (
