@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let bestRate = 100;
     let historyFeedback = "";
 
-    const deepseekKey = "sk-001fd9662505400da587437e1a3940f3";
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
     // Helper: Execute LLM Call (Gemini)
     async function callGemini(prompt: string) {
@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.7 }
+              generationConfig: { temperature: 0.85 }
             })
           });
           if (response.ok) {
@@ -73,6 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Helper: Execute LLM Call (DeepSeek)
     async function callDeepSeek(prompt: string) {
+      if (!deepseekKey) return null;
       try {
         const response = await fetch('https://api.deepseek.com/chat/completions', {
           method: 'POST',
@@ -81,10 +82,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             'Authorization': `Bearer ${deepseekKey}`
           },
           body: JSON.stringify({
-            model: "deepseek-chat",
+            model: “deepseek-chat”,
             messages: [
-              { role: "system", content: "你是一个专业的学术查重评分助手。" },
-              { role: "user", content: prompt }
+              {
+                role: “system”,
+                content: “你是一个专业的 AI 内容检测专家，擅长识别学术文本中的 AI 生成痕迹。你的评分严格、客观，不受文章主题影响，只关注写作模式。”
+              },
+              { role: “user”, content: prompt }
             ],
             stream: false
           })
@@ -94,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return data.choices?.[0]?.message?.content?.trim();
         }
       } catch (e) {
-        console.error("DeepSeek Error:", e);
+        console.error(“DeepSeek Error:”, e);
       }
       return null;
     }
@@ -102,36 +106,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // --- ITERATIVE LOOP (AGENTIC WORKFLOW) ---
     for (let round = 1; round <= MAX_ROUNDS; round++) {
       console.log(`[Humanize] Round ${round} started...`);
-      
-      // 1. Humanize Step (Gemini)
-      // 这里的提示词经过了极致压缩和去对话化处理
-      const humanizePrompt = `【任务】：重构学术段落。
-【禁令】：严禁返回任何前缀、后缀、对话、评价或解释（如“好的”、“以下是重构内容”等）。
-【目标】：去 AI 化、增强人类专家韵味、保持 95% 以上字数。
-【约束】：保留所有术语、数据、引文。
 
-${historyFeedback ? `【修正建议】：${historyFeedback}` : ""}
+      // 1. Humanize Step (Gemini) — optimized prompt
+      const humanizePrompt = `你是一位资深中文学术写作专家，正在帮助作者修改一段论文草稿，使其读起来更像真实的人类专家撰写，而非 AI 生成。
 
-【待处理原文字】：
+【严格禁止】
+- 禁止输出任何前缀、后缀、解释、评论（如”好的”、”以下是修改内容”、”修改如下”等）
+- 禁止添加 Markdown 格式（如 **加粗**、## 标题）
+- 禁止改变原文的核心论点、数据、专业术语和引文
+
+【改写目标】
+- 打破 AI 惯用的对称句式，混合使用长句与短句
+- 避免以”此外”、”然而”、”综上所述”、”值得注意的是”等 AI 高频连接词开头
+- 用更具体、更口语化的学术表达替代空泛的宏观陈述
+- 适当引入不完整的插入语、省略和语气助词，增加人类写作的不规则感
+- 局部调整语序，使句子结构有变化，避免”主谓宾”的机械重复
+- 保持总字数在原文的 90%~110% 之间
+${historyFeedback ? `\n【本轮重点修正】${historyFeedback}` : “”}
+
+【待改写原文】
 ${originalText}`;
 
       const humanizedText = await callGemini(humanizePrompt);
       if (!humanizedText) break;
 
-      // 简单清洗掉可能存在的 Markdown 包装
       const cleanedText = humanizedText.replace(/^```[\s\S]*?\n/g, '').replace(/\n```$/g, '').trim();
 
       console.log(`[Score] Round ${round} scoring...`);
 
-      // 2. Scoring Step (DeepSeek)
-      const scoringPrompt = `请对以下段落的 AI 生成概率进行 0-100 打分（仅返回数字）：
-${cleanedText}`;
+      // 2. Scoring Step (DeepSeek) — structured rubric
+      const scoringPrompt = `请从以下五个维度评估这段中文学术文本的 AI 生成概率，最终给出 0~100 的综合分（0=完全像人写，100=明显 AI 生成）。
+
+【评估维度】
+1. 句式多样性：句子长短是否交错？是否有不规则的语序和插入语？
+2. 连接词使用：是否频繁使用”此外”、”然而”、”综上”、”值得注意”等 AI 高频词？
+3. 表达具体性：是否有具体细节和个人化表达，而非空泛的宏观陈述？
+4. 语气自然度：读起来是否像真实学者的思维流动，还是像模板填空？
+5. 结构规律性：段落结构是否过于工整对称？
+
+【待评估文本】
+${cleanedText}
+
+请只返回一个 0~100 的整数，不要任何解释。`;
 
       const scoreStr = await callDeepSeek(scoringPrompt);
-      // 使用正则提取所有数字，防止 DeepSeek 返回类似 "得分：20分" 这种带文字的内容
       const matchedScore = scoreStr?.match(/\d+/);
-      const score = matchedScore ? parseInt(matchedScore[0]) : 100;
-      
+      const score = matchedScore ? parseInt(matchedScore[0]) : 50;
+
       console.log(`[Result] Round ${round} -> DeepSeek Score: ${score}%`);
 
       if (score < bestRate) {
@@ -139,13 +160,17 @@ ${cleanedText}`;
         bestText = cleanedText;
       }
 
-      // 如果分数达到理想目标 (<=15)，立即提前结束，节省时间
       if (bestRate <= TARGET_RATE) {
         console.log(`[Early Exit] Target achieved.`);
         break;
       }
 
-      historyFeedback = `上一轮 AI 嫌疑分数为 ${score}，句式仍显死板，请进一步通过长短句交错打碎结构。`;
+      // Targeted feedback based on score range
+      if (score > 70) {
+        historyFeedback = `得分 ${score}，AI 痕迹仍重。请大幅打碎句式结构，删除所有对称排比，加入至少两处短句或插入语，并换掉所有”此外/然而/综上”等连接词。`;
+      } else {
+        historyFeedback = `得分 ${score}，方向正确但还不够自然。请进一步让表达更口语化、更具体，避免空泛的总结性陈述。`;
+      }
     }
 
     return res.status(200).json({
