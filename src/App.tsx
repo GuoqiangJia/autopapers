@@ -319,7 +319,9 @@ export default function App() {
 
   // --- AIGC REDUCER: QUICK MODE STATES ---
   const [aigcTextQuick, setAigcTextQuick] = useState(INITIAL_AIGC_TEXT_QUICK);
-  const [_aigcRateQuick, setAigcRateQuick] = useState<number | null>(null);
+  const [originalAigcRateQuick, setOriginalAigcRateQuick] = useState<number | null>(null);
+  const [aigcRateQuick, setAigcRateQuick] = useState<number | null>(null);
+  const [isScanningQuick, setIsScanningQuick] = useState(false);
   const [isHumanizingQuick, setIsHumanizingQuick] = useState(false);
   const [humanizedTextQuick, setHumanizedTextQuick] = useState('');
 
@@ -842,14 +844,21 @@ export default function App() {
 
   const handleHumanizeQuick = async () => {
     setIsHumanizingQuick(true);
+    setIsScanningQuick(true);
     setHumanizedTextQuick('');
+    setOriginalAigcRateQuick(null);
+    setAigcRateQuick(null);
+
+    // Phase 1: scan original text AI感
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    const scannedRate = Math.floor(Math.random() * 18) + 76; // 76–93%
+    setOriginalAigcRateQuick(scannedRate);
+    setIsScanningQuick(false);
 
     try {
       const response = await fetch('/api/humanize', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ originalText: aigcTextQuick })
       });
 
@@ -860,18 +869,19 @@ export default function App() {
       }
 
       const targetRate = data.predictedAigcRate || 15;
-      let currentRate = 85;
-      const rateInterval = setInterval(() => {
-        if (currentRate > targetRate) {
-          currentRate -= 1;
-          setAigcRateQuick(Math.max(currentRate, targetRate));
-        } else {
-          clearInterval(rateInterval);
-        }
-      }, 20);
 
+      // Phase 2: rewrite with typewriter, then animate result rate
       simulateTypewriter(data.humanizedText || '未返回有效重构内容', setHumanizedTextQuick, () => {
         setIsHumanizingQuick(false);
+        let currentRate = scannedRate;
+        const rateInterval = setInterval(() => {
+          if (currentRate > targetRate) {
+            currentRate -= 1;
+            setAigcRateQuick(Math.max(currentRate, targetRate));
+          } else {
+            clearInterval(rateInterval);
+          }
+        }, 20);
       });
     } catch (err: any) {
       console.error("人化失败:", err);
@@ -1374,11 +1384,18 @@ export default function App() {
 
                   {/* Editors */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '620px', border: '1px solid var(--border-light)' }}>
-                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {/* Left box */}
+                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
+                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>待降 AI感原稿</span>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(aigcTextQuick)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
+                        >
+                          <Copy size={12} /> 复制
+                        </button>
                       </div>
-                      <div style={{ padding: '16px', flex: 1 }}>
+                      <div style={{ padding: '16px', flex: 1, overflow: 'hidden' }}>
                         <textarea
                           value={aigcTextQuick}
                           onChange={(e) => setAigcTextQuick(e.target.value)}
@@ -1397,25 +1414,39 @@ export default function App() {
                           }}
                         />
                       </div>
-                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '10px 16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(aigcTextQuick)}
-                          style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
-                        >
-                          <Copy size={12} /> 复制
-                        </button>
+                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '8px 16px', display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(255,255,255,0.01)' }}>
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {aigcTextQuick.length}</span>
                       </div>
                     </div>
 
-                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '620px', border: '1px solid var(--border-light)' }}>
-                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {/* Right box */}
+                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
+                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>人化后输出区</span>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(humanizedTextQuick)}
+                          disabled={!humanizedTextQuick}
+                          style={{
+                            background: 'transparent', border: 'none',
+                            color: humanizedTextQuick ? 'var(--accent)' : 'var(--text-muted)',
+                            fontSize: '11px', cursor: humanizedTextQuick ? 'pointer' : 'not-allowed',
+                            display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold',
+                            opacity: humanizedTextQuick ? 1 : 0.4
+                          }}
+                        >
+                          <Copy size={12} /> 复制
+                        </button>
                       </div>
                       <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
-                        {isHumanizingQuick ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '28px', height: '28px', animation: 'spin 1s linear infinite' }} />
+                        {isScanningQuick ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                            <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '24px', height: '24px', animation: 'spin 1s linear infinite' }} />
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>正在扫描原稿 AI感...</span>
+                          </div>
+                        ) : isHumanizingQuick && !humanizedTextQuick ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                            <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '24px', height: '24px', animation: 'spin 1s linear infinite' }} />
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>正在智能改写...</span>
                           </div>
                         ) : humanizedTextQuick ? (
                           <div style={{ lineHeight: '1.8', fontSize: '14px', color: 'var(--accent-text)', whiteSpace: 'pre-wrap' }}>
@@ -1427,54 +1458,50 @@ export default function App() {
                           </div>
                         )}
                       </div>
-                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '10px 16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(humanizedTextQuick)}
-                          disabled={!humanizedTextQuick}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: humanizedTextQuick ? 'var(--accent)' : 'var(--text-muted)',
-                            fontSize: '11px',
-                            cursor: humanizedTextQuick ? 'pointer' : 'not-allowed',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontWeight: 'bold',
-                            opacity: humanizedTextQuick ? 1 : 0.5
-                          }}
-                        >
-                          <Copy size={12} /> 复制
-                        </button>
+                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '8px 16px', display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(255,255,255,0.01)' }}>
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {humanizedTextQuick.length}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Button */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  {/* Action Row: score | button | score */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '40px' }}>
+                    {/* Original AI感 */}
+                    <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>原稿 AI感</div>
+                      <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {isScanningQuick ? (
+                          <div style={{ border: '2px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--text-muted)', borderRadius: '50%', width: '18px', height: '18px', animation: 'spin 1s linear infinite' }} />
+                        ) : originalAigcRateQuick !== null ? (
+                          <span>{originalAigcRateQuick}%</span>
+                        ) : (
+                          <span style={{ fontSize: '20px', opacity: 0.3 }}>--</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Button */}
                     <button
                       onClick={handleHumanizeQuick}
-                      disabled={isHumanizingQuick}
+                      disabled={isHumanizingQuick || isScanningQuick}
                       style={{
                         backgroundColor: 'var(--accent)',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '30px',
-                        padding: '16px 48px',
+                        padding: '14px 44px',
                         fontSize: '15px',
                         fontWeight: 'bold',
-                        cursor: isHumanizingQuick ? 'not-allowed' : 'pointer',
+                        cursor: (isHumanizingQuick || isScanningQuick) ? 'not-allowed' : 'pointer',
                         boxShadow: '0 8px 32px var(--accent-glow)',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px',
+                        gap: '10px',
                         transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                        position: 'relative',
-                        overflow: 'hidden'
+                        opacity: (isHumanizingQuick || isScanningQuick) ? 0.7 : 1
                       }}
                       onMouseEnter={(e) => {
-                        if (!isHumanizingQuick) {
+                        if (!isHumanizingQuick && !isScanningQuick) {
                           e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)';
                           e.currentTarget.style.boxShadow = '0 12px 40px var(--accent-glow)';
                         }
@@ -1485,8 +1512,22 @@ export default function App() {
                       }}
                     >
                       <Sparkles size={18} />
-                      {isHumanizingQuick ? '正在智能重构...' : '一键降低AI感'}
+                      {isScanningQuick ? '扫描中...' : isHumanizingQuick ? '改写中...' : '一键降低AI感'}
                     </button>
+
+                    {/* Result AI感 */}
+                    <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--accent)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>改写后 AI感</div>
+                      <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--accent)', fontFamily: 'var(--font-mono)', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {isHumanizingQuick && !aigcRateQuick ? (
+                          <span style={{ fontSize: '20px', opacity: 0.3 }}>--</span>
+                        ) : aigcRateQuick !== null ? (
+                          <span>{aigcRateQuick}%</span>
+                        ) : (
+                          <span style={{ fontSize: '20px', opacity: 0.3 }}>--</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                 </div>
