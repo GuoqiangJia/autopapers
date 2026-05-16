@@ -35,6 +35,7 @@ interface MockParagraph {
   originalText: string;
   diffSegments: DiffSegment[];
   finalText: string;
+  predictedAigcRate?: number;
   isHeaderSkipped?: boolean;
 }
 
@@ -442,12 +443,18 @@ export default function App() {
           const totalBody = bodyParagraphs.length;
           const processedBody = bodyParagraphs.filter(p => p.finalText && p.finalText.length > 0).length;
           const ratio = totalBody > 0 ? processedBody / totalBody : 0;
-          const newFinalRate = Math.round(rec.originalAigcRate - (rec.originalAigcRate - 12) * ratio);
+          const scoredParagraphs = bodyParagraphs.filter(p => p.predictedAigcRate !== undefined);
+          let calculatedRate = Math.round(rec.originalAigcRate - (rec.originalAigcRate - 15) * ratio);
+          
+          if (scoredParagraphs.length > 0) {
+            const sum = scoredParagraphs.reduce((acc, curr) => acc + (curr.predictedAigcRate || 0), 0);
+            calculatedRate = Math.round(sum / scoredParagraphs.length);
+          }
 
           return {
             ...rec,
             paragraphs: paragraphs,
-            finalAigcRate: Math.max(12, newFinalRate)
+            finalAigcRate: Math.max(8, calculatedRate)
           };
         }
         return rec;
@@ -497,6 +504,7 @@ export default function App() {
             id: p.id,
             success: true,
             finalText: data.humanizedText,
+            predictedAigcRate: data.predictedAigcRate,
             diffSegments: computeDiff(p.originalText, data.humanizedText)
           };
         } catch (err) {
@@ -513,6 +521,7 @@ export default function App() {
             return {
               ...p,
               finalText: match.finalText,
+              predictedAigcRate: (match as any).predictedAigcRate,
               diffSegments: match.diffSegments || []
             };
           }
@@ -800,6 +809,7 @@ export default function App() {
             return {
               ...p,
               finalText: newlyRegeneratedText,
+              predictedAigcRate: data.predictedAigcRate,
               diffSegments: newlyDiffSegments
             };
           }
@@ -849,12 +859,16 @@ export default function App() {
         throw new Error(data.error || '接口执行失败');
       }
 
+      const targetRate = data.predictedAigcRate || 15;
       let currentRate = 85;
       const rateInterval = setInterval(() => {
-        currentRate -= 1;
-        setAigcRateQuick(Math.max(currentRate, 12));
-        if (currentRate <= 12) clearInterval(rateInterval);
-      }, 30);
+        if (currentRate > targetRate) {
+          currentRate -= 1;
+          setAigcRateQuick(Math.max(currentRate, targetRate));
+        } else {
+          clearInterval(rateInterval);
+        }
+      }, 20);
 
       simulateTypewriter(data.humanizedText || '未返回有效重构内容', setHumanizedTextQuick, () => {
         setIsHumanizingQuick(false);

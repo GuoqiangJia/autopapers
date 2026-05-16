@@ -32,66 +32,104 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       humanizedText: `【Vercel 演示模式 - 未配置 GEMINI_API_KEY】\n\n${fallbackText}`,
+      predictedAigcRate: 12,
       originalText
     });
   }
 
   try {
-    // Highly resilient model routing loop (Tries latest 2.5, falls back to 2.0 and 1.5 if 404 occurs)
     const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-    let textResult = '';
-    let lastError: any = null;
+    const MAX_ROUNDS = 3;
+    const TARGET_RATE = 15; // 目标 AIGC 概率低于 15%
 
-    for (const model of modelsToTry) {
-      try {
-        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `你是一位殿堂级的中文学术论文编辑与去 AI 检测专家。请将用户输入的学术段落进行彻底的“去 AIGC 痕迹/人化润色”。
-【强制要求】：
-1. 严禁改动任何专业名词、核心算法公式、代码数据与参考文献。
-2. 彻底打碎原本由大模型翻译或直接生成而来的“机械感、句式单一、翻译味重”的句式。
-3. 重组句法结构，多使用非对称的转折句式，合理嵌入中文学术文献特有的过渡副词（例如：进言之、诚然、显而易见、毋庸置疑、有鉴于此）。
-4. 使整段文字读起来流畅、深刻，极其贴近人类学术大牛亲手撰写的文字。
-5. 仅返回润色降重后的纯正文，绝对不要夹带任何多余解释、拼音、Markdown前缀或自我介绍。
+    let currentText = originalText;
+    let bestText = "";
+    let bestRate = 100;
+    let historyFeedback = "";
 
-用户需要重构的原文字如下：
-${originalText}`
-              }]
-            }],
-            generationConfig: { temperature: 0.7 }
-          })
-        });
-
-        if (geminiResponse.ok) {
-          const data = await geminiResponse.json() as any;
-          const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (candidateText) {
-            textResult = candidateText.trim();
-            break; // Success! Exit the fallback loop.
+    // Helper: Execute LLM Call
+    async function callGemini(prompt: string) {
+      for (const model of modelsToTry) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.7 }
+            })
+          });
+          if (response.ok) {
+            const data = await response.json() as any;
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) return text.trim();
           }
-        } else {
-          lastError = await geminiResponse.json();
-        }
-      } catch (err: any) {
-        lastError = { message: err.message };
+        } catch (e) {}
       }
+      return null;
     }
 
-    if (!textResult) {
-      return res.status(500).json({ 
-        error: `Google Gemini API returned error (tried ${modelsToTry.join(', ')}): ${JSON.stringify(lastError)}` 
-      });
+    // --- ITERATIVE LOOP (AGENTIC WORKFLOW) ---
+    for (let round = 1; round <= MAX_ROUNDS; round++) {
+      // 1. Humanize Step
+      const humanizePrompt = `你是一位深耕学术多年的资深论文导师，擅长将机械的学术段落重构为极具人类专家韵味的文字。
+目标：对以下段落进行“去 AI 化”重构，彻底消除 AI 生成感。
+
+【核心要求】：
+1. **禁止改动**：专业术语、公式数据、算法逻辑及参考文献。
+2. **拒绝陈词滥调**：严禁堆砌如“毋庸置疑、诚然、进言之、有鉴于此”等 AI 特征词汇。
+3. **句式重组**：打破平衡结构，采用长短句交错、灵活连接，模仿人类深度思考的张力。
+4. **保量改写**：字数必须保持在原文的 95% 以上，严禁大幅删减。
+${historyFeedback ? `\n【上一轮反馈】：\n${historyFeedback}\n请针对上述反馈进行更深度的迭代改进。` : ""}
+
+用户原文字：
+${originalText}`;
+
+      const humanizedText = await callGemini(humanizePrompt);
+      if (!humanizedText) break;
+
+      // 2. Scoring Step
+      const scoringPrompt = `你是一位严苛的 AIGC 检测专家，擅长从语感、逻辑多样性、高频词统计等方面识别人工智能生成的文本。
+请对以下学术段落的“AI 生成概率”进行打分（0-100 分，分数越低代表人类创作特征越明显，越不容易被检测）。
+
+【评分准则】：
+- 结构过于工整、过渡词死板、缺乏语义深度 -> 高分 (80-100)
+- 句式灵活、逻辑隐性、表达地道、具有专家韵味 -> 低分 (0-20)
+
+【输出要求】：
+仅返回一个 0 到 100 之间的纯数字。
+
+待检测文本：
+${humanizedText}`;
+
+      const scoreStr = await callGemini(scoringPrompt);
+      const score = parseInt(scoreStr || "100");
+
+      // Update best result
+      if (score < bestRate) {
+        bestRate = score;
+        bestText = humanizedText;
+      }
+
+      // Check if target met
+      if (bestRate <= TARGET_RATE) break;
+
+      // Prepare feedback for next round
+      historyFeedback = `当前改写版本的 AIGC 嫌疑分数为 ${score}。
+主要问题：文字依然存在部分模式化的倾向，请进一步打碎原有结构，增强语言的自然流动感和专业深度。`;
+    }
+
+    if (!bestText) {
+      throw new Error("Failed to generate humanized text after multiple rounds.");
     }
 
     return res.status(200).json({
       success: true,
-      humanizedText: textResult,
+      humanizedText: bestText,
+      predictedAigcRate: bestRate,
       originalText
     });
+
   } catch (e: any) {
     return res.status(500).json({ error: `Cloud execute error: ${e.message}` });
   }
