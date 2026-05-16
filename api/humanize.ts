@@ -43,7 +43,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const MAX_ROUNDS = 2;
     const TARGET_RATE = 15;
 
-    let currentText = originalText;
     let bestText = "";
     let bestRate = 100;
     let historyFeedback = "";
@@ -170,6 +169,15 @@ ${cleanedText}
       } else {
         historyFeedback = `得分 ${score}，方向正确但还不够自然。请进一步让表达更口语化、更具体，避免空泛的总结性陈述。`;
       }
+    }
+
+    if (!bestText) {
+      return res.status(200).json({
+        success: true,
+        humanizedText: `【Gemini API 暂时不可用，请检查额度或稍后重试】\n\n${originalText}`,
+        predictedAigcRate: 100,
+        originalText
+      });
     }
 
     return res.status(200).json({
