@@ -324,6 +324,7 @@ export default function App() {
   const [isScanningQuick, setIsScanningQuick] = useState(false);
   const [isHumanizingQuick, setIsHumanizingQuick] = useState(false);
   const [humanizedTextQuick, setHumanizedTextQuick] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // --- PLAGIARISM REDUCER: QUICK MODE STATES ---
   const [plagTextQuick, setPlagTextQuick] = useState(INITIAL_PLAGIARISM_TEXT_QUICK);
@@ -870,18 +871,20 @@ export default function App() {
 
       const targetRate = data.predictedAigcRate || 15;
 
-      // Phase 2: rewrite with typewriter, then animate result rate
+      // Phase 2: start typewriter and rate animation simultaneously
+      let currentRate = scannedRate;
+      const steps = Math.max(scannedRate - targetRate, 1);
+      const rateInterval = setInterval(() => {
+        if (currentRate > targetRate) {
+          currentRate -= 1;
+          setAigcRateQuick(currentRate);
+        } else {
+          clearInterval(rateInterval);
+        }
+      }, Math.round(2500 / steps));
+
       simulateTypewriter(data.humanizedText || '未返回有效重构内容', setHumanizedTextQuick, () => {
         setIsHumanizingQuick(false);
-        let currentRate = scannedRate;
-        const rateInterval = setInterval(() => {
-          if (currentRate > targetRate) {
-            currentRate -= 1;
-            setAigcRateQuick(Math.max(currentRate, targetRate));
-          } else {
-            clearInterval(rateInterval);
-          }
-        }, 20);
       });
     } catch (err: any) {
       console.error("人化失败:", err);
@@ -1389,10 +1392,10 @@ export default function App() {
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>待降 AI感原稿</span>
                         <button
-                          onClick={() => navigator.clipboard.writeText(aigcTextQuick)}
-                          style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
+                          onClick={() => { navigator.clipboard.writeText(aigcTextQuick); setCopiedId('left'); setTimeout(() => setCopiedId(null), 1500); }}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
                         >
-                          <Copy size={12} /> 复制
+                          <Copy size={12} /> {copiedId === 'left' ? '已复制 ✓' : '复制'}
                         </button>
                       </div>
                       <div style={{ padding: '16px', flex: 1, overflow: 'hidden' }}>
@@ -1424,17 +1427,17 @@ export default function App() {
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>人化后输出区</span>
                         <button
-                          onClick={() => navigator.clipboard.writeText(humanizedTextQuick)}
+                          onClick={() => { navigator.clipboard.writeText(humanizedTextQuick); setCopiedId('right'); setTimeout(() => setCopiedId(null), 1500); }}
                           disabled={!humanizedTextQuick}
                           style={{
                             background: 'transparent', border: 'none',
-                            color: humanizedTextQuick ? 'var(--accent)' : 'var(--text-muted)',
+                            color: 'var(--text-primary)',
                             fontSize: '11px', cursor: humanizedTextQuick ? 'pointer' : 'not-allowed',
                             display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold',
                             opacity: humanizedTextQuick ? 1 : 0.4
                           }}
                         >
-                          <Copy size={12} /> 复制
+                          <Copy size={12} /> {copiedId === 'right' ? '已复制 ✓' : '复制'}
                         </button>
                       </div>
                       <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
@@ -1486,7 +1489,7 @@ export default function App() {
                       disabled={isHumanizingQuick || isScanningQuick}
                       style={{
                         backgroundColor: 'var(--accent)',
-                        color: '#ffffff',
+                        color: 'var(--bg-primary)',
                         border: 'none',
                         borderRadius: '30px',
                         padding: '14px 44px',
@@ -1517,11 +1520,9 @@ export default function App() {
 
                     {/* Result AI感 */}
                     <div style={{ textAlign: 'center', minWidth: '80px' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--accent)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>改写后 AI感</div>
-                      <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--accent)', fontFamily: 'var(--font-mono)', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {isHumanizingQuick && !aigcRateQuick ? (
-                          <span style={{ fontSize: '20px', opacity: 0.3 }}>--</span>
-                        ) : aigcRateQuick !== null ? (
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>改写后 AI感</div>
+                      <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {aigcRateQuick !== null ? (
                           <span>{aigcRateQuick}%</span>
                         ) : (
                           <span style={{ fontSize: '20px', opacity: 0.3 }}>--</span>
