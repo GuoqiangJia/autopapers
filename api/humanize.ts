@@ -47,7 +47,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let bestRate = 100;
     let historyFeedback = "";
 
-    // Helper: Execute LLM Call
+    const deepseekKey = "sk-001fd9662505400da587437e1a3940f3";
+
+    // Helper: Execute LLM Call (Gemini)
     async function callGemini(prompt: string) {
       for (const model of modelsToTry) {
         try {
@@ -69,58 +71,81 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return null;
     }
 
+    // Helper: Execute LLM Call (DeepSeek)
+    async function callDeepSeek(prompt: string) {
+      try {
+        const response = await fetch('https://api.deepseek.com/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              { role: "system", content: "你是一个专业的学术查重评分助手。" },
+              { role: "user", content: prompt }
+            ],
+            stream: false
+          })
+        });
+        if (response.ok) {
+          const data = await response.json() as any;
+          return data.choices?.[0]?.message?.content?.trim();
+        }
+      } catch (e) {
+        console.error("DeepSeek Error:", e);
+      }
+      return null;
+    }
+
     // --- ITERATIVE LOOP (AGENTIC WORKFLOW) ---
     for (let round = 1; round <= MAX_ROUNDS; round++) {
-      // 1. Humanize Step
-      const humanizePrompt = `你是一位深耕学术多年的资深论文导师，擅长将机械的学术段落重构为极具人类专家韵味的文字。
-目标：对以下段落进行“去 AI 化”重构，彻底消除 AI 生成感。
+      console.log(`[Humanize] Round ${round} started...`);
+      
+      // 1. Humanize Step (Gemini)
+      // 这里的提示词经过了极致压缩和去对话化处理
+      const humanizePrompt = `【任务】：重构学术段落。
+【禁令】：严禁返回任何前缀、后缀、对话、评价或解释（如“好的”、“以下是重构内容”等）。
+【目标】：去 AI 化、增强人类专家韵味、保持 95% 以上字数。
+【约束】：保留所有术语、数据、引文。
 
-【核心要求】：
-1. **禁止改动**：专业术语、公式数据、算法逻辑及参考文献。
-2. **拒绝陈词滥调**：严禁堆砌如“毋庸置疑、诚然、进言之、有鉴于此”等 AI 特征词汇。
-3. **句式重组**：打破平衡结构，采用长短句交错、灵活连接，模仿人类深度思考的张力。
-4. **保量改写**：字数必须保持在原文的 95% 以上，严禁大幅删减。
-${historyFeedback ? `\n【上一轮反馈】：\n${historyFeedback}\n请针对上述反馈进行更深度的迭代改进。` : ""}
+${historyFeedback ? `【修正建议】：${historyFeedback}` : ""}
 
-用户原文字：
+【待处理原文字】：
 ${originalText}`;
 
       const humanizedText = await callGemini(humanizePrompt);
       if (!humanizedText) break;
 
-      // 2. Scoring Step
-      const scoringPrompt = `你是一位严苛的 AIGC 检测专家，擅长从语感、逻辑多样性、高频词统计等方面识别人工智能生成的文本。
-请对以下学术段落的“AI 生成概率”进行打分（0-100 分，分数越低代表人类创作特征越明显，越不容易被检测）。
+      // 简单清洗掉可能存在的 Markdown 包装
+      const cleanedText = humanizedText.replace(/^```[\s\S]*?\n/g, '').replace(/\n```$/g, '').trim();
 
-【评分准则】：
-- 结构过于工整、过渡词死板、缺乏语义深度 -> 高分 (80-100)
-- 句式灵活、逻辑隐性、表达地道、具有专家韵味 -> 低分 (0-20)
+      console.log(`[Score] Round ${round} scoring...`);
 
-【输出要求】：
-仅返回一个 0 到 100 之间的纯数字。
+      // 2. Scoring Step (DeepSeek)
+      const scoringPrompt = `请对以下段落的 AI 生成概率进行 0-100 打分（仅返回数字）：
+${cleanedText}`;
 
-待检测文本：
-${humanizedText}`;
+      const scoreStr = await callDeepSeek(scoringPrompt);
+      // 使用正则提取所有数字，防止 DeepSeek 返回类似 "得分：20分" 这种带文字的内容
+      const matchedScore = scoreStr?.match(/\d+/);
+      const score = matchedScore ? parseInt(matchedScore[0]) : 100;
+      
+      console.log(`[Result] Round ${round} -> DeepSeek Score: ${score}%`);
 
-      const scoreStr = await callGemini(scoringPrompt);
-      const score = parseInt(scoreStr || "100");
-
-      // Update best result
       if (score < bestRate) {
         bestRate = score;
-        bestText = humanizedText;
+        bestText = cleanedText;
       }
 
-      // Check if target met
-      if (bestRate <= TARGET_RATE) break;
+      // 如果分数达到理想目标 (<=15)，立即提前结束，节省时间
+      if (bestRate <= TARGET_RATE) {
+        console.log(`[Early Exit] Target achieved.`);
+        break;
+      }
 
-      // Prepare feedback for next round
-      historyFeedback = `当前改写版本的 AIGC 嫌疑分数为 ${score}。
-主要问题：文字依然存在部分模式化的倾向，请进一步打碎原有结构，增强语言的自然流动感和专业深度。`;
-    }
-
-    if (!bestText) {
-      throw new Error("Failed to generate humanized text after multiple rounds.");
+      historyFeedback = `上一轮 AI 嫌疑分数为 ${score}，句式仍显死板，请进一步通过长短句交错打碎结构。`;
     }
 
     return res.status(200).json({
@@ -131,6 +156,7 @@ ${humanizedText}`;
     });
 
   } catch (e: any) {
+    console.error("Critical Error:", e);
     return res.status(500).json({ error: `Cloud execute error: ${e.message}` });
   }
 }
