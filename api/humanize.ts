@@ -27,29 +27,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const callGemini = async (prompt: string): Promise<string | null> => {
       for (const model of geminiModels) {
-        try {
-          const resp = await fetch(
-            `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiKey}`,
-            {
+        for (const apiVersion of ['v1', 'v1beta']) {
+          try {
+            const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${geminiKey}`;
+            const resp = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: { temperature: 0.85 }
               })
+            });
+            const body = await resp.json() as any;
+            if (resp.ok) {
+              const text = body?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) return (text as string).trim();
+            } else {
+              console.error(`[Gemini] ${model}/${apiVersion} failed: ${resp.status}`, JSON.stringify(body));
             }
-          );
-          if (resp.ok) {
-            const data = await resp.json() as any;
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) return (text as string).trim();
+          } catch (e) {
+            console.error(`[Gemini] ${model}/${apiVersion} exception:`, e);
           }
-        } catch (_) { /* try next model */ }
+        }
       }
       return null;
     };
 
-    const callDeepSeek = async (prompt: string): Promise<string | null> => {
+    const callDeepSeek = async (prompt: string, systemPrompt?: string): Promise<string | null> => {
       try {
         const resp = await fetch('https://api.deepseek.com/chat/completions', {
           method: 'POST',
@@ -57,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           body: JSON.stringify({
             model: 'deepseek-chat',
             messages: [
-              { role: 'system', content: '你是一个专业的AI内容检测专家，擅长识别学术文本中的AI生成痕迹。你的评分严格、客观，只关注写作模式。' },
+              { role: 'system', content: systemPrompt ?? '你是一个专业的AI内容检测专家，擅长识别学术文本中的AI生成痕迹。你的评分严格、客观，只关注写作模式。' },
               { role: 'user', content: prompt }
             ],
             stream: false
@@ -66,6 +70,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (resp.ok) {
           const data = await resp.json() as any;
           return data?.choices?.[0]?.message?.content?.trim() ?? null;
+        } else {
+          console.error('[DeepSeek] failed:', resp.status);
         }
       } catch (e) {
         console.error('DeepSeek Error:', e);
@@ -101,7 +107,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         originalText
       ].join('\n');
 
-      const humanized = await callGemini(humanizePrompt);
+      let humanized = await callGemini(humanizePrompt);
+      if (!humanized) {
+        console.log('[Humanize] Gemini failed, falling back to DeepSeek');
+        humanized = await callDeepSeek(humanizePrompt, '你是一位资深中文学术写作专家，只输出改写后的文本，不输出任何解释、前缀或Markdown格式。');
+      }
       if (!humanized) break;
 
       const cleaned = humanized.replace(/^```[\s\S]*?\n/, '').replace(/\n```$/, '').trim();
@@ -143,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!bestText) {
       return res.status(200).json({
         success: true,
-        humanizedText: `【Gemini API 暂时不可用，请稍后重试】\n\n${originalText}`,
+        humanizedText: `【API 暂时不可用，请稍后重试】\n\n${originalText}`,
         predictedAigcRate: 100,
         originalText
       });
