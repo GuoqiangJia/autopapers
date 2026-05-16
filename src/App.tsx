@@ -602,7 +602,7 @@ export default function App() {
 
   // Reset Document Upload State (Returning to History Lobby)
   const handleResetDocument = () => {
-    if (confirm('确认返回到历史文档列表大厅吗？\n您的所有段落微调与降重进度均已安全自动保存在历史记录中。')) {
+    {
       setHasUploaded(false);
       setActiveHistoryId(null);
       localStorage.removeItem('autopapers_active_history_id');
@@ -701,8 +701,8 @@ export default function App() {
   // Card-specific Real Paragraph Regeneration utilizing Google Gemini Edge endpoint
   // Returns a stable simulated original AI感 rate for a paragraph (deterministic by id)
   const getOriginalRate = (id: number) => 75 + (id * 7) % 20;
-  // Returns rewritten AI感 rate: original - 50, min 15
-  const getRewrittenRate = (id: number) => Math.max(getOriginalRate(id) - 50, 15);
+  // Returns rewritten AI感 rate: original - random(50~60), min 15
+  const getRewrittenRate = (id: number) => Math.max(getOriginalRate(id) - (50 + (id * 3) % 11), 15);
 
   const handleSequentialHumanize = async () => {
     const pending = paragraphs.filter(p => p.type === 'body' && !p.finalText);
@@ -825,7 +825,8 @@ export default function App() {
         throw new Error(data.error || '接口执行失败');
       }
 
-      const targetRate = Math.max(scannedRate - 50, 15);
+      const drop = 50 + Math.floor(Math.random() * 11); // 50~60
+      const targetRate = Math.max(scannedRate - drop, 15);
 
       // Phase 2: start typewriter and rate animation simultaneously
       let currentRate = scannedRate;
