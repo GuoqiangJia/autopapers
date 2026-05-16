@@ -1,18 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Shield, 
-  Sparkles, 
-  FileText, 
-  BookOpen, 
-  Heart, 
-  TrendingDown, 
-  Plus, 
-  Search, 
-  ChevronRight, 
+import {
+  Shield,
+  Sparkles,
+  FileText,
+  BookOpen,
+  Heart,
+  TrendingDown,
+  Plus,
+  Search,
+  ChevronRight,
   ChevronLeft,
-  Download, 
-  Copy, 
-  GraduationCap, 
+  Download,
+  Copy,
+  GraduationCap,
   AlertTriangle,
   Compass,
   Sun,
@@ -344,7 +344,7 @@ export default function App() {
   // Character-level Longest Common Subsequence (LCS) Diff calculator
   const computeDiff = (oldStr: string, newStr: string): DiffSegment[] => {
     const dp: number[][] = Array(oldStr.length + 1).fill(0).map(() => Array(newStr.length + 1).fill(0));
-    
+
     for (let i = 1; i <= oldStr.length; i++) {
       for (let j = 1; j <= newStr.length; j++) {
         if (oldStr[i - 1] === newStr[j - 1]) {
@@ -447,7 +447,7 @@ export default function App() {
           const ratio = totalBody > 0 ? processedBody / totalBody : 0;
           const scoredParagraphs = bodyParagraphs.filter(p => p.predictedAigcRate !== undefined);
           let calculatedRate = Math.round(rec.originalAigcRate - (rec.originalAigcRate - 15) * ratio);
-          
+
           if (scoredParagraphs.length > 0) {
             const sum = scoredParagraphs.reduce((acc, curr) => acc + (curr.predictedAigcRate || 0), 0);
             calculatedRate = Math.round(sum / scoredParagraphs.length);
@@ -546,7 +546,7 @@ export default function App() {
       });
     }
   };
-  
+
 
 
   // --- ACADEMIC POLISH STATES ---
@@ -690,7 +690,7 @@ export default function App() {
       setParagraphs(MOCK_AIGC_PARAGRAPHS);
       setUploadedFilename('基于Java的教务管理系统.docx');
       setParagraphViewModes({ 43: 'diff', 44: 'diff' });
-      
+
       localStorage.removeItem('autopapers_paragraphs');
       localStorage.removeItem('autopapers_filename');
       localStorage.removeItem('autopapers_has_uploaded');
@@ -704,7 +704,7 @@ export default function App() {
     const targetFilename = customFilename || uploadedFilename;
 
     // If isOriginal is true, map paragraphs to clear finalText so API falls back to originalText
-    const processedParagraphs = isOriginal 
+    const processedParagraphs = isOriginal
       ? targetParagraphs.map(p => ({ ...p, finalText: '' }))
       : targetParagraphs;
 
@@ -729,15 +729,15 @@ export default function App() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      
+
       let safeName = targetFilename;
       if (isOriginal) {
-        safeName = targetFilename.endsWith('.docx') 
-          ? targetFilename.replace('.docx', '_原稿.docx') 
+        safeName = targetFilename.endsWith('.docx')
+          ? targetFilename.replace('.docx', '_原稿.docx')
           : `${targetFilename}_原稿.docx`;
       } else {
-        safeName = targetFilename.endsWith('.docx') 
-          ? targetFilename.replace('.docx', '_降AIGC后.docx') 
+        safeName = targetFilename.endsWith('.docx')
+          ? targetFilename.replace('.docx', '_降AIGC后.docx')
           : `${targetFilename}_降AIGC后.docx`;
       }
       a.download = safeName;
@@ -845,7 +845,7 @@ export default function App() {
   const handleHumanizeQuick = async () => {
     setIsHumanizingQuick(true);
     setHumanizedTextQuick('');
-    
+
     try {
       const response = await fetch('/api/humanize', {
         method: 'POST',
@@ -854,9 +854,9 @@ export default function App() {
         },
         body: JSON.stringify({ originalText: aigcTextQuick })
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || '接口执行失败');
       }
@@ -1007,7 +1007,7 @@ export default function App() {
             <stop offset="100%" stopColor="rgba(223, 192, 151, 0.05)" />
           </radialGradient>
         </defs>
-        
+
         {webPaths.map((path, idx) => (
           <path
             key={idx}
@@ -1078,15 +1078,15 @@ export default function App() {
       overflow: 'hidden'
     }}>
       {/* Hidden native Word file input element */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleRealDocumentUpload} 
-        accept=".docx" 
-        style={{ display: 'none' }} 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleRealDocumentUpload}
+        accept=".docx"
+        style={{ display: 'none' }}
       />
-      
-      
+
+
 
       {/* ==========================================
           SIDEBAR: Premium Navigation Menu
@@ -1105,7 +1105,7 @@ export default function App() {
         overflow: 'visible'
       }}>
         {/* Floating Collapse Arrow sitting on the right boundary border line */}
-        <button 
+        <button
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           style={{
             position: 'absolute',
@@ -1140,13 +1140,13 @@ export default function App() {
 
         <div>
           {/* Logo Brand */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
-            gap: '10px', 
-            marginBottom: '36px', 
-            paddingLeft: isSidebarCollapsed ? '0' : '8px' 
+            gap: '10px',
+            marginBottom: '36px',
+            paddingLeft: isSidebarCollapsed ? '0' : '8px'
           }}>
             <div style={{
               width: '32px',
@@ -1161,7 +1161,7 @@ export default function App() {
               boxShadow: '0 0 10px rgba(223, 192, 151, 0.2)',
               flexShrink: 0
             }}>
-               <GraduationCap size={18} />
+              <GraduationCap size={18} />
             </div>
             {!isSidebarCollapsed && (
               <div>
@@ -1214,19 +1214,19 @@ export default function App() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', width: '100%' }}>
-                    <Icon 
-                      size={16} 
-                      style={{ 
+                    <Icon
+                      size={16}
+                      style={{
                         color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
                         transition: 'color 0.2s',
                         flexShrink: 0
-                      }} 
+                      }}
                     />
                     {!isSidebarCollapsed && (
                       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <div style={{ fontSize: '13px', fontWeight: isActive ? '600' : '400', color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                           {item.label}
-                         </div>
+                        </div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                           {item.desc}
                         </div>
@@ -1263,7 +1263,7 @@ export default function App() {
         overflowY: 'auto',
         backgroundColor: 'var(--bg-primary)'
       }}>
-        
+
         {/* Header ribbon */}
         <div style={{
           height: '64px',
@@ -1287,7 +1287,7 @@ export default function App() {
               {activeTab === 'thanks' && '7. 致谢定制工坊 (Thanks Studio)'}
             </span>
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{
               display: 'flex',
@@ -1304,7 +1304,7 @@ export default function App() {
               AuraPaper 云端学术大模型对齐就绪 (知网 & GB/T 7714 规则库)
             </span>
 
-            <button 
+            <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               style={{
                 background: 'rgba(255,255,255,0.05)',
@@ -1330,13 +1330,13 @@ export default function App() {
 
         {/* Content Wrapper */}
         <div style={{ padding: '32px', maxWidth: '1200px', width: '100%', margin: '0 auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
           {/* ==========================================
               TAB PANEL: 降低AI感 (AI-feel Reducer)
               ========================================== */}
           {activeTab === 'aigc' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              
+
               {/* Header Titles */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
@@ -1384,7 +1384,7 @@ export default function App() {
               {/* ----------------- MODE A: QUICK MODE ----------------- */}
               {aigcMode === 'quick' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  
+
 
 
                   {/* Editors */}
@@ -1515,12 +1515,12 @@ export default function App() {
               {/* ----------------- MODE B: WORKSPACE MODE ----------------- */}
               {aigcMode === 'workspace' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  
+
                   {/* State 1: Upload Drag zone */}
                   {!hasUploaded && !isUploading && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                       {/* Compact Upload Area */}
-                      <div 
+                      <div
                         onClick={triggerDocumentUploadSimulation}
                         style={{
                           border: '2px dashed rgba(223, 192, 151, 0.3)',
@@ -1593,12 +1593,12 @@ export default function App() {
                               </thead>
                               <tbody>
                                 {historyRecords.map((rec) => (
-                                  <tr 
-                                    key={rec.id} 
+                                  <tr
+                                    key={rec.id}
                                     onClick={() => handleSelectHistoryRecord(rec)}
                                     className="history-row"
-                                    style={{ 
-                                      borderBottom: '1px solid var(--border-light)', 
+                                    style={{
+                                      borderBottom: '1px solid var(--border-light)',
                                       cursor: 'pointer',
                                       transition: 'all 0.2s'
                                     }}
@@ -1606,11 +1606,11 @@ export default function App() {
                                     <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <FileText size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                                        <span style={{ 
-                                          overflow: 'hidden', 
-                                          textOverflow: 'ellipsis', 
+                                        <span style={{
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
                                           whiteSpace: 'nowrap',
-                                          maxWidth: '240px' 
+                                          maxWidth: '240px'
                                         }} title={rec.filename}>
                                           {rec.filename}
                                         </span>
@@ -1621,22 +1621,22 @@ export default function App() {
                                     </td>
                                     <td style={{ padding: '14px 16px' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ 
-                                          fontSize: '11px', 
-                                          padding: '1px 6px', 
-                                          borderRadius: '4px', 
-                                          backgroundColor: 'rgba(255, 77, 79, 0.12)', 
+                                        <span style={{
+                                          fontSize: '11px',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          backgroundColor: 'rgba(255, 77, 79, 0.12)',
                                           color: '#ff4d4f',
                                           border: '1px solid rgba(255, 77, 79, 0.2)'
                                         }}>
                                           {rec.originalAigcRate}%
                                         </span>
                                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>➔</span>
-                                        <span style={{ 
-                                          fontSize: '11px', 
-                                          padding: '1px 6px', 
-                                          borderRadius: '4px', 
-                                          backgroundColor: rec.finalAigcRate <= 20 ? 'rgba(82, 196, 26, 0.12)' : 'rgba(223, 192, 151, 0.15)', 
+                                        <span style={{
+                                          fontSize: '11px',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          backgroundColor: rec.finalAigcRate <= 20 ? 'rgba(82, 196, 26, 0.12)' : 'rgba(223, 192, 151, 0.15)',
                                           color: rec.finalAigcRate <= 20 ? '#52c41a' : 'var(--accent)',
                                           border: rec.finalAigcRate <= 20 ? '1px solid rgba(82, 196, 26, 0.2)' : '1px solid rgba(223, 192, 151, 0.2)',
                                           fontWeight: 'bold'
@@ -1650,7 +1650,7 @@ export default function App() {
                                     </td>
                                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-                                        <button 
+                                        <button
                                           onClick={() => handleSelectHistoryRecord(rec)}
                                           style={{
                                             backgroundColor: 'rgba(223, 192, 151, 0.12)',
@@ -1674,7 +1674,7 @@ export default function App() {
                                         >
                                           进入工作区
                                         </button>
-                                        <button 
+                                        <button
                                           onClick={() => handleExportWord(rec.paragraphs, rec.filename, true)}
                                           style={{
                                             backgroundColor: 'transparent',
@@ -1692,7 +1692,7 @@ export default function App() {
                                         >
                                           ⬇️ 原稿
                                         </button>
-                                        <button 
+                                        <button
                                           onClick={() => handleExportWord(rec.paragraphs, rec.filename, false)}
                                           style={{
                                             backgroundColor: 'transparent',
@@ -1710,7 +1710,7 @@ export default function App() {
                                         >
                                           ⬇️ 降重稿
                                         </button>
-                                        <button 
+                                        <button
                                           onClick={(e) => handleDeleteHistoryRecord(rec.id, e)}
                                           style={{
                                             backgroundColor: 'transparent',
@@ -1768,7 +1768,7 @@ export default function App() {
                   {/* State 3: WORKSPACE DIFF VIEW (COMPLETELY REPRODUCING SCREENSHOT) */}
                   {hasUploaded && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      
+
                       {/* Document Toolbar Header Ribbon (Redesigned 2-Tier Masterpiece) */}
                       <div className="glass-panel" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '20px', borderBottom: '1px solid var(--border-medium)' }}>
                         {/* Tier 1: Top Navigation Bar */}
@@ -1865,7 +1865,7 @@ export default function App() {
 
                           {/* Right: Actions */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <button 
+                            <button
                               onClick={handleResetDocument}
                               style={{
                                 background: 'rgba(255, 77, 79, 0.06)',
@@ -1893,7 +1893,7 @@ export default function App() {
                               <RefreshCw size={12} /> 重置文档
                             </button>
 
-                            <button 
+                            <button
                               onClick={() => handleExportWord()}
                               style={{
                                 backgroundColor: 'var(--accent)',
@@ -1930,7 +1930,7 @@ export default function App() {
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                           ⚠️ 系统已过滤非正文（标题、大纲目录、参考文献等），默认保持不改写以护航文章格式。
                         </span>
-                        <span 
+                        <span
                           onClick={handleBatchHumanize}
                           style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
                         >
@@ -1946,7 +1946,7 @@ export default function App() {
 
                           if (p.type === 'header') {
                             return (
-                              <div 
+                              <div
                                 key={p.id}
                                 style={{
                                   display: 'flex',
@@ -1972,7 +1972,7 @@ export default function App() {
                           }
 
                           return (
-                            <div 
+                            <div
                               key={p.id}
                               style={{
                                 display: 'flex',
@@ -2000,7 +2000,7 @@ export default function App() {
 
                               {/* Right main body content */}
                               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                
+
                                 {/* 1. Original Text */}
                                 <div style={{ borderBottom: '1px solid var(--border-light)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>原文</span>
@@ -2014,7 +2014,7 @@ export default function App() {
                                   <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
                                     改写 ({viewMode === 'diff' ? '对比视图' : '纯改后视图'})
                                   </span>
-                                  
+
                                   {isCardRegenerating ? (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent)', fontSize: '12px', height: '60px' }}>
                                       <div style={{ border: '2px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
@@ -2027,13 +2027,13 @@ export default function App() {
                                   ) : (
                                     <p style={{ fontSize: '13px', lineHeight: '1.8', margin: 0, color: 'var(--text-primary)' }}>
                                       {viewMode === 'diff' ? (
-                                        (p.diffSegments && p.diffSegments.length > 0 
-                                          ? p.diffSegments 
+                                        (p.diffSegments && p.diffSegments.length > 0
+                                          ? p.diffSegments
                                           : computeDiff(p.originalText, p.finalText)
                                         ).map((seg, idx) => {
                                           if (seg.type === 'removed') {
                                             return (
-                                              <del 
+                                              <del
                                                 key={idx}
                                                 style={{
                                                   color: '#ff4d4f',
@@ -2048,7 +2048,7 @@ export default function App() {
                                             );
                                           } else if (seg.type === 'added') {
                                             return (
-                                              <ins 
+                                              <ins
                                                 key={idx}
                                                 style={{
                                                   color: '#52c41a',
@@ -2090,13 +2090,13 @@ export default function App() {
                                   <div style={{ display: 'flex', gap: '16px' }}>
                                     {p.finalText && (
                                       <>
-                                        <button 
+                                        <button
                                           onClick={() => navigator.clipboard.writeText(p.finalText)}
                                           style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                                         >
                                           复制段落
                                         </button>
-                                        <button 
+                                        <button
                                           onClick={() => toggleCardViewMode(p.id)}
                                           style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
                                         >
@@ -2104,15 +2104,15 @@ export default function App() {
                                         </button>
                                       </>
                                     )}
-                                    <button 
+                                    <button
                                       onClick={() => handleRegenerateCard(p.id)}
                                       disabled={isCardRegenerating}
-                                      style={{ 
-                                        background: 'transparent', 
-                                        border: 'none', 
-                                        color: !p.finalText ? 'var(--accent)' : 'var(--text-muted)', 
-                                        fontSize: !p.finalText ? '12.5px' : '11px', 
-                                        cursor: 'pointer', 
+                                      style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: !p.finalText ? 'var(--accent)' : 'var(--text-muted)',
+                                        fontSize: !p.finalText ? '12.5px' : '11px',
+                                        cursor: 'pointer',
                                         fontWeight: !p.finalText ? 'bold' : 'normal',
                                         fontStyle: !p.finalText ? 'normal' : 'italic',
                                         textDecoration: !p.finalText ? 'underline' : 'none'
@@ -2143,7 +2143,7 @@ export default function App() {
               ========================================== */}
           {activeTab === 'plagiarism' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              
+
               {/* Header Titles */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
@@ -2193,7 +2193,7 @@ export default function App() {
               {/* ----------------- MODE A: QUICK MODE ----------------- */}
               {plagMode === 'quick' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  
+
                   {/* Action ribbon */}
                   <div className="glass-panel" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
@@ -2221,11 +2221,11 @@ export default function App() {
                       <div style={{ borderLeft: '1px solid var(--border-light)', height: '24px' }} />
 
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={deepRewriteQuick} 
-                          onChange={(e) => setDeepRewriteQuick(e.target.checked)} 
-                          style={{ accentColor: 'var(--accent)' }} 
+                        <input
+                          type="checkbox"
+                          checked={deepRewriteQuick}
+                          onChange={(e) => setDeepRewriteQuick(e.target.checked)}
+                          style={{ accentColor: 'var(--accent)' }}
                         />
                         <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>深度概念重构改写</span>
                       </label>
@@ -2285,7 +2285,7 @@ export default function App() {
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: 'bold' }}>降重后改写结果 (相似度：{plagRateQuick}%)</span>
                         {paraphrasedTextQuick && (
-                          <button 
+                          <button
                             onClick={() => navigator.clipboard.writeText(paraphrasedTextQuick)}
                             style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                           >
@@ -2318,10 +2318,10 @@ export default function App() {
               {/* ----------------- MODE B: WORKSPACE MODE ----------------- */}
               {plagMode === 'workspace' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  
+
                   {/* File upload prompt trigger */}
                   {!hasUploaded && !isUploading && (
-                    <div 
+                    <div
                       onClick={triggerDocumentUploadSimulation}
                       style={{
                         border: '2px dashed rgba(223, 192, 151, 0.3)',
@@ -2390,7 +2390,7 @@ export default function App() {
                   {/* Workspace Content rendering */}
                   {hasUploaded && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      
+
                       {/* Ribbon Header Toolbar (Redesigned 2-Tier Masterpiece) */}
                       <div className="glass-panel" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '20px', borderBottom: '1px solid var(--border-medium)' }}>
                         {/* Tier 1: Top Navigation Bar */}
@@ -2484,7 +2484,7 @@ export default function App() {
 
                           {/* Right: Actions */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <button 
+                            <button
                               onClick={handleResetDocument}
                               style={{
                                 background: 'rgba(255, 77, 79, 0.06)',
@@ -2512,7 +2512,7 @@ export default function App() {
                               <RefreshCw size={12} /> 关闭工作区
                             </button>
 
-                            <button 
+                            <button
                               onClick={() => handleExportWord()}
                               style={{
                                 backgroundColor: 'var(--accent)',
@@ -2767,7 +2767,7 @@ export default function App() {
                   <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '13px', fontWeight: 'bold' }}>美化润色结果</span>
                     {polishedResult && (
-                      <button 
+                      <button
                         onClick={() => navigator.clipboard.writeText(polishedResult)}
                         style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                       >
@@ -2833,7 +2833,7 @@ export default function App() {
                       <GraduationCap size={18} style={{ color: 'var(--accent)' }} />
                       选择毕业论文 / 科技文献标准排版大纲模板
                     </h3>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {TEMPLATES.map((tpl) => (
                         <div
@@ -3065,7 +3065,7 @@ export default function App() {
                         <AlertTriangle size={14} style={{ color: '#faad14' }} />
                         点击一键定位到特定标签并执行自动修复
                       </span>
-                      <button 
+                      <button
                         onClick={() => setActiveTab(selectedReviewer === 1 ? 'layout' : 'polish')}
                         style={{
                           backgroundColor: 'var(--accent)',
@@ -3097,7 +3097,7 @@ export default function App() {
                     <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 12px' }}>
                       📝 审稿人修正大纲任务清单 (Actionable Checklist)
                     </h3>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {[
                         { text: '第 3 节：补充多线程选课及核心 Java 并发线程池收敛数学配置模型。', reviewer: 'Reviewer #1' },
@@ -3435,8 +3435,8 @@ export default function App() {
                     position: 'relative',
                     overflow: 'hidden',
                     border: '1px solid var(--border-medium)',
-                    background: thanksSkin === 'gold' 
-                      ? 'linear-gradient(135deg, #0e1222 0%, #1a1e35 100%)' 
+                    background: thanksSkin === 'gold'
+                      ? 'linear-gradient(135deg, #0e1222 0%, #1a1e35 100%)'
                       : 'linear-gradient(135deg, #070913 0%, #150e28 100%)'
                   }}>
                     <div style={{
@@ -3494,7 +3494,7 @@ export default function App() {
                         <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                           印记: Java编译通过 · 毕业大吉 🎓
                         </span>
-                        
+
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
                             onClick={() => navigator.clipboard.writeText(thanksOutput)}
@@ -3521,7 +3521,7 @@ export default function App() {
 
         </div>
       </div>
-      
+
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
