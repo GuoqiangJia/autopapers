@@ -1631,7 +1631,7 @@ export default function App() {
                                       {rec.pointsConsumed.toLocaleString()} 点
                                     </td>
                                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
                                         <button
                                           onClick={() => handleSelectHistoryRecord(rec)}
                                           style={{
@@ -1654,7 +1654,7 @@ export default function App() {
                                             e.currentTarget.style.color = 'var(--accent)';
                                           }}
                                         >
-                                          进入工作区
+                                          工作区
                                         </button>
                                         <button
                                           onClick={() => handleExportWord(rec.paragraphs, rec.filename, true)}
@@ -1672,7 +1672,7 @@ export default function App() {
                                           onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
                                           title="下载无修改原始文档"
                                         >
-                                          ⬇️ 原稿
+                                          原稿
                                         </button>
                                         <button
                                           onClick={() => handleExportWord(rec.paragraphs, rec.filename, false)}
@@ -1690,7 +1690,7 @@ export default function App() {
                                           onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
                                           title="下载已人化降重文档"
                                         >
-                                          ⬇️ 降重稿
+                                          降重稿
                                         </button>
                                         <button
                                           onClick={(e) => handleDeleteHistoryRecord(rec.id, e)}
