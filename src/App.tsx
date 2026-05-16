@@ -319,11 +319,9 @@ export default function App() {
 
   // --- AIGC REDUCER: QUICK MODE STATES ---
   const [aigcTextQuick, setAigcTextQuick] = useState(INITIAL_AIGC_TEXT_QUICK);
-  const [originalAigcRateQuick, setOriginalAigcRateQuick] = useState<number | null>(null);
-  const [aigcRateQuick, setAigcRateQuick] = useState<number | null>(null);
+  const [_aigcRateQuick, setAigcRateQuick] = useState<number | null>(null);
   const [isHumanizingQuick, setIsHumanizingQuick] = useState(false);
   const [humanizedTextQuick, setHumanizedTextQuick] = useState('');
-  const [agentStatus, setAgentStatus] = useState('');
 
   // --- PLAGIARISM REDUCER: QUICK MODE STATES ---
   const [plagTextQuick, setPlagTextQuick] = useState(INITIAL_PLAGIARISM_TEXT_QUICK);
@@ -1455,11 +1453,6 @@ export default function App() {
 
                   {/* Action Button */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                    {agentStatus && (
-                      <div style={{ fontSize: '12px', color: 'var(--accent)', fontStyle: 'italic', opacity: 0.8 }}>
-                        {agentStatus}
-                      </div>
-                    )}
                     <button
                       onClick={handleHumanizeQuick}
                       disabled={isHumanizingQuick}
