@@ -1233,19 +1233,6 @@ export default function App() {
                       </div>
                     )}
                   </div>
-                  {!isSidebarCollapsed && item.badge && (
-                    <span style={{
-                      fontSize: '9px',
-                      padding: '1px 5px',
-                      borderRadius: '4px',
-                      backgroundColor: item.badge === '核心' ? 'rgba(223, 192, 151, 0.15)' : 'rgba(255, 100, 100, 0.15)',
-                      color: item.badge === '核心' ? 'var(--accent)' : '#ff6464',
-                      border: `1px solid ${item.badge === '核心' ? 'rgba(223, 192, 151, 0.2)' : 'rgba(255,100,100,0.2)'}`,
-                      flexShrink: 0
-                    }}>
-                      {item.badge}
-                    </span>
-                  )}
                 </button>
               );
             })}
