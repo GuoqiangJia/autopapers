@@ -1337,11 +1337,9 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '28px', color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                    降低 AIGC 浓度比率
+                    降低AI感
                   </h1>
-                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    通过“浓度热力图”智能扫描文本中疑似AI生产的段落，利用“深度人化算法”完美将其润滑为具有严谨个人风格的高质学术笔触。
-                  </p>
+                  {/* Description removed */}
                 </div>
 
                 {/* Sub Mode Selection Selector tabs */}
@@ -1389,7 +1387,7 @@ export default function App() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>待降 AIGC 单段原稿</span>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>待降 AI感原稿</span>
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {aigcTextQuick.length}</span>
                       </div>
                       <div style={{ padding: '16px', flex: 1 }}>
@@ -1414,7 +1412,7 @@ export default function App() {
 
                     <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>人化后输出区 (AIGC：{aigcRateQuick}%)</span>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>人化后输出区 (AI感：{aigcRateQuick}%)</span>
                         {humanizedTextQuick && (
                           <button 
                             onClick={() => navigator.clipboard.writeText(humanizedTextQuick)}
@@ -1428,7 +1426,7 @@ export default function App() {
                         {isHumanizingQuick ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                             <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '28px', height: '28px', animation: 'spin 1s linear infinite' }} />
-                            <span style={{ fontSize: '12px', color: 'var(--accent)' }}>正在进行上下文语义降维、剔除翻译感...</span>
+                            <span style={{ fontSize: '12px', color: 'var(--accent)' }}>智能体正在进行上下文语义降维，去除AI感...</span>
                           </div>
                         ) : humanizedTextQuick ? (
                           <div style={{ lineHeight: '1.8', fontSize: '14px', color: 'var(--accent-text)', whiteSpace: 'pre-wrap' }}>
@@ -1477,7 +1475,7 @@ export default function App() {
                       }}
                     >
                       <Sparkles size={16} />
-                      {isHumanizingQuick ? '正在智能重构学术笔触...' : '一键消除 AIGC 痕迹 (免费智能降重)'}
+                      {isHumanizingQuick ? '正在智能重构学术笔触...' : '一键降低AI感'}
                     </button>
                   </div>
 
@@ -1519,7 +1517,7 @@ export default function App() {
                           拖拽 Word (.docx) 论文文档至此上传
                         </h3>
                         <p style={{ fontSize: '11px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto' }}>
-                          系统将自动剔除大纲、公式、非正文及参考文献，仅对有效论文正文段落进行高精度分段 AIGC 痕迹降维改写。
+                          系统将自动剔除大纲、公式、非正文及参考文献，仅对有效论文正文段落进行高精度分段 AI感 痕迹降维改写。
                         </p>
                         <button style={{
                           marginTop: '12px',
@@ -1558,7 +1556,7 @@ export default function App() {
                                 <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
                                   <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>文档名称</th>
                                   <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '150px' }}>上传时间</th>
-                                  <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '160px' }}>AIGC 浓度变化</th>
+                                  <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '160px' }}>AI感 变化</th>
                                   <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '110px' }}>消耗点数</th>
                                   <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', width: '280px', textAlign: 'right' }}>操作</th>
                                 </tr>
