@@ -869,7 +869,7 @@ export default function App() {
         throw new Error(data.error || '接口执行失败');
       }
 
-      const targetRate = data.predictedAigcRate || 15;
+      const targetRate = Math.max(scannedRate - 50, 15);
 
       // Phase 2: start typewriter and rate animation simultaneously
       let currentRate = scannedRate;
