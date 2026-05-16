@@ -716,7 +716,9 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ originalText: p.originalText })
         });
-        const data = await response.json();
+        const raw = await response.text();
+        let data: any;
+        try { data = JSON.parse(raw); } catch { throw new Error('服务器错误，请稍后重试'); }
         if (!response.ok) throw new Error(data.error || '接口失败');
         const newDiff = computeDiff(p.originalText, data.humanizedText);
         setParagraphs(prev => {
@@ -753,12 +755,13 @@ export default function App() {
         })
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || '接口通信失败');
+      const rawText = await response.text();
+      let data: any;
+      try { data = JSON.parse(rawText); } catch {
+        throw new Error(response.status === 504 ? '请求超时，请稍后重试' : '服务器错误，请稍后重试');
       }
+      if (!response.ok) throw new Error(data.error || '接口通信失败');
 
-      const data = await response.json();
       const newlyRegeneratedText = data.humanizedText;
       const newlyDiffSegments = computeDiff(cardParagraph.originalText, newlyRegeneratedText);
 

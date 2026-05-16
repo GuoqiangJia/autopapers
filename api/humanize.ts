@@ -39,15 +39,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-    const MAX_ROUNDS = 3;
-    const TARGET_RATE = 15; // 目标 AIGC 概率低于 15%
+    const deepseekKey = "sk-001fd9662505400da587437e1a3940f3";
+    const MAX_ROUNDS = 2;
+    const TARGET_RATE = 15;
 
     let currentText = originalText;
     let bestText = "";
     let bestRate = 100;
     let historyFeedback = "";
-
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
     // Helper: Execute LLM Call (Gemini)
     async function callGemini(prompt: string) {
