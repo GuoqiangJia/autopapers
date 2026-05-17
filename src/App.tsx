@@ -2124,7 +2124,7 @@ export default function App() {
                   {/* Dual Editor */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     {/* Left box */}
-                    <div className=”glass-panel” style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
+                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>原始文本</span>
                         <button
@@ -2138,7 +2138,7 @@ export default function App() {
                         <textarea
                           value={plagTextQuick}
                           onChange={(e) => setPlagTextQuick(e.target.value)}
-                          placeholder=”粘贴待改写文本...”
+                          placeholder="粘贴待改写文本..."
                           style={{
                             width: '100%',
                             height: '100%',
@@ -2159,7 +2159,7 @@ export default function App() {
                     </div>
 
                     {/* Right box */}
-                    <div className=”glass-panel” style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
+                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>深度改写结果</span>
                         <button
@@ -2702,7 +2702,7 @@ export default function App() {
                   智能学术扩写器 ("凑字数神器")
                 </h1>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  针对 Java/教务管理类论点句子，自由选择“原理解析”、“对比论证”、“应用延展”三大维度，一键转化生成完全绿标通过的高学术质量扩写语段。
+                  针对 Java/教务管理类论点句子，自由选择"原理解析"、"对比论证"、"应用延展"三大维度，一键转化生成完全绿标通过的高学术质量扩写语段。
                 </p>
               </div>
 
@@ -2838,7 +2838,7 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
                 <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '28px', color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                  千人千面“致谢”定制工坊 (Thanks Studio)
+                  千人千面"致谢"定制工坊 (Thanks Studio)
                 </h1>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                   告别抄袭模板！勾选你写 Java 教务论文期间的酸甜苦辣，一键获得属于您个人情感、得体大气的论文致谢。
