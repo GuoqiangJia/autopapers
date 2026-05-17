@@ -16,8 +16,7 @@ import {
   AlertTriangle,
   Compass,
   Sun,
-  Moon,
-  RefreshCw
+  Moon
 } from 'lucide-react';
 
 // ==========================================
