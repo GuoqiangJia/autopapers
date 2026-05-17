@@ -326,13 +326,12 @@ export default function App() {
   const [humanizedTextQuick, setHumanizedTextQuick] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // --- PLAGIARISM REDUCER: QUICK MODE STATES ---
+  // --- DEEP REWRITE: QUICK MODE STATES ---
   const [plagTextQuick, setPlagTextQuick] = useState(INITIAL_PLAGIARISM_TEXT_QUICK);
-  const [plagRateQuick, setPlagRateQuick] = useState(34.5);
-  const [plagPlatformQuick, setPlagPlatformQuick] = useState<'cnki' | 'vip' | 'wanfang'>('cnki');
   const [isParaphrasingQuick, setIsParaphrasingQuick] = useState(false);
   const [paraphrasedTextQuick, setParaphrasedTextQuick] = useState('');
   const [deepRewriteQuick, setDeepRewriteQuick] = useState(true);
+  const [deepRewriteCopied, setDeepRewriteCopied] = useState(false);
 
   // --- WORKSPACE MODE STATES (AIGC & Plagiarism shared concepts) ---
   const [isUploading, setIsUploading] = useState(false);
@@ -854,22 +853,32 @@ export default function App() {
     }
   };
 
-  const handleParaphraseQuick = () => {
+  const handleParaphraseQuick = async () => {
+    if (!plagTextQuick.trim()) return;
     setIsParaphrasingQuick(true);
     setParaphrasedTextQuick('');
-
-    let currentRate = 34.5;
-    const rateInterval = setInterval(() => {
-      currentRate -= 0.3;
-      setPlagRateQuick(parseFloat(Math.max(currentRate, 8.2).toFixed(1)));
-      if (currentRate <= 8.2) clearInterval(rateInterval);
-    }, 20);
-
-    setTimeout(() => {
-      simulateTypewriter(PARAPHRASED_PLAGIARISM_TEXT_QUICK, setParaphrasedTextQuick, () => {
-        setIsParaphrasingQuick(false);
+    try {
+      const response = await fetch('/api/humanize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ originalText: plagTextQuick, mode: 'deepRewrite', deepMode: deepRewriteQuick })
       });
-    }, 1500);
+      const rawText = await response.text();
+      let data: any;
+      try { data = JSON.parse(rawText); } catch {
+        throw new Error(response.status === 504 ? '请求超时，请稍后重试' : '服务器错误，请稍后重试');
+      }
+      if (data.humanizedText) {
+        simulateTypewriter(data.humanizedText, setParaphrasedTextQuick, () => {
+          setIsParaphrasingQuick(false);
+        });
+      } else {
+        throw new Error(data.error || '改写失败');
+      }
+    } catch (e: any) {
+      setParaphrasedTextQuick(`改写失败：${e.message}`);
+      setIsParaphrasingQuick(false);
+    }
   };
 
   const handlePolish = () => {
@@ -1150,7 +1159,7 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {[
               { id: 'aigc', label: '降低AI感', desc: 'AI-feel Humanizer', icon: Shield },
-              { id: 'plagiarism', label: '降低重复率', desc: 'Similarity Shield', icon: TrendingDown },
+              { id: 'plagiarism', label: '深度改写', desc: 'Deep Rewrite', icon: TrendingDown },
               { id: 'polish', label: '学术润色', desc: 'Academic Polish', icon: Sparkles },
               { id: 'layout', label: '格式排版', desc: 'Layout & GB/T7714', icon: FileText },
               { id: 'review', label: 'AI审稿人', desc: 'Peer Review Panel', icon: Search },
@@ -1237,7 +1246,7 @@ export default function App() {
             <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
               {activeTab === 'aigc' && '1. 降低AI感 (AI-feel Humanizer)'}
-              {activeTab === 'plagiarism' && '2. 降低重复率 (Similarity Shield)'}
+              {activeTab === 'plagiarism' && '2. 深度改写 (Deep Rewrite)'}
               {activeTab === 'polish' && '3. 学术润色 (Academic Polish)'}
               {activeTab === 'layout' && '4. 格式排版 (Layout & GB/T7714)'}
               {activeTab === 'review' && '5. AI审稿人 (Peer Review Panel)'}
@@ -2052,10 +2061,10 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '28px', color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                    降低重复率相似度 (知网 / 维普)
+                    深度改写 (Deep Rewrite)
                   </h1>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    对比查重红区，重组词义与语法，在严格保留科研成果原意的前提下，快速降低在各大查重系统中的相似度指标。
+                    通过同义替换、句式重构、语序调整、视角转换六大维度对文本进行深度改写，在保留核心论点的前提下最大化字面差异度。
                   </p>
                 </div>
 
@@ -2089,7 +2098,7 @@ export default function App() {
                       cursor: 'pointer'
                     }}
                   >
-                    📄 全篇文档降重
+                    📄 全篇文档改写
                   </button>
                 </div>
               </div>
@@ -2100,39 +2109,29 @@ export default function App() {
 
                   {/* Action ribbon */}
                   <div className="glass-panel" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        {['cnki', 'vip', 'wanfang'].map((p) => (
+                        {(['standard', 'deep'] as const).map((m) => (
                           <button
-                            key={p}
-                            onClick={() => setPlagPlatformQuick(p as any)}
+                            key={m}
+                            onClick={() => setDeepRewriteQuick(m === 'deep')}
                             style={{
                               padding: '6px 14px',
                               borderRadius: '6px',
-                              border: plagPlatformQuick === p ? '1px solid var(--accent)' : '1px solid transparent',
-                              backgroundColor: plagPlatformQuick === p ? 'rgba(223, 192, 151, 0.1)' : 'transparent',
-                              color: plagPlatformQuick === p ? 'var(--accent)' : 'var(--text-secondary)',
+                              border: (deepRewriteQuick ? m === 'deep' : m === 'standard') ? '1px solid var(--accent)' : '1px solid transparent',
+                              backgroundColor: (deepRewriteQuick ? m === 'deep' : m === 'standard') ? 'rgba(223, 192, 151, 0.1)' : 'transparent',
+                              color: (deepRewriteQuick ? m === 'deep' : m === 'standard') ? 'var(--accent)' : 'var(--text-secondary)',
                               fontSize: '13px',
-                              textTransform: 'uppercase',
                               cursor: 'pointer'
                             }}
                           >
-                            {p === 'cnki' ? '知网系统' : p === 'vip' ? '维普检测' : '万方数据库'}
+                            {m === 'standard' ? '标准改写' : '🔥 深度六维改写'}
                           </button>
                         ))}
                       </div>
-
-                      <div style={{ borderLeft: '1px solid var(--border-light)', height: '24px' }} />
-
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={deepRewriteQuick}
-                          onChange={(e) => setDeepRewriteQuick(e.target.checked)}
-                          style={{ accentColor: 'var(--accent)' }}
-                        />
-                        <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>深度概念重构改写</span>
-                      </label>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {deepRewriteQuick ? '同义替换 · 句式重构 · 语序调整 · 视角转换 · 概念重述 · 补充原创' : '同义替换 · 句式重构'}
+                      </div>
                     </div>
 
                     <button
@@ -2154,7 +2153,7 @@ export default function App() {
                       }}
                     >
                       <TrendingDown size={16} />
-                      {isParaphrasingQuick ? '正在消解查重词组...' : '执行一键降重改写 (消耗15算力)'}
+                      {isParaphrasingQuick ? '深度改写中...' : '执行深度改写'}
                     </button>
                   </div>
 
@@ -2162,7 +2161,7 @@ export default function App() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>原始论文 / 查重重复红区</span>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>原始文本</span>
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {plagTextQuick.length}</span>
                       </div>
                       <div style={{ padding: '16px', flex: 1 }}>
@@ -2187,13 +2186,13 @@ export default function App() {
 
                     <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
                       <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>降重后改写结果 (相似度：{plagRateQuick}%)</span>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>深度改写结果</span>
                         {paraphrasedTextQuick && (
                           <button
-                            onClick={() => navigator.clipboard.writeText(paraphrasedTextQuick)}
+                            onClick={() => { navigator.clipboard.writeText(paraphrasedTextQuick); setDeepRewriteCopied(true); setTimeout(() => setDeepRewriteCopied(false), 1500); }}
                             style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                           >
-                            <Copy size={12} /> 复制
+                            <Copy size={12} /> {deepRewriteCopied ? '已复制 ✓' : '复制'}
                           </button>
                         )}
                       </div>
@@ -2201,7 +2200,7 @@ export default function App() {
                         {isParaphrasingQuick ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                             <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '28px', height: '28px', animation: 'spin 1s linear infinite' }} />
-                            <span style={{ fontSize: '12px', color: 'var(--accent)' }}>正在进行语序重组，多义词替换，降重绿标对齐中...</span>
+                            <span style={{ fontSize: '12px', color: 'var(--accent)' }}>正在进行同义替换、句式重构、视角转换深度改写中...</span>
                           </div>
                         ) : paraphrasedTextQuick ? (
                           <div style={{ lineHeight: '1.8', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
@@ -2209,7 +2208,7 @@ export default function App() {
                           </div>
                         ) : (
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '13px' }}>
-                            点击“执行一键降重改写”，查看同义消解与句型重排绿化成果。
+                            输入原始文本，点击”执行深度改写”，查看六维改写结果。
                           </div>
                         )}
                       </div>

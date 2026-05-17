@@ -9,8 +9,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const { originalText } = req.body;
+  const { originalText, mode, deepMode } = req.body;
   if (!originalText) return res.status(400).json({ error: 'Missing originalText' });
+  const isDeepRewrite = mode === 'deepRewrite';
 
   const geminiKey = process.env.GEMINI_API_KEY;
   const deepseekKey = "sk-001fd9662505400da587437e1a3940f3";
@@ -86,7 +87,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (let round = 1; round <= MAX_ROUNDS; round++) {
       console.log(`[Humanize] Round ${round}`);
 
-      const humanizePrompt = [
+      const humanizePrompt = isDeepRewrite ? [
+        '你是一位资深中文学术写作专家，需要对以下文本进行深度改写，使其字面表达与原文产生最大差异，同时严格保留核心论点和数据。',
+        '',
+        '【严格禁止】',
+        '- 禁止输出任何前缀、后缀、解释、评论（如"好的"、"以下是修改内容"等）',
+        '- 禁止添加Markdown格式',
+        '- 禁止改变原文的核心论点、数据、专业术语和引文',
+        '',
+        deepMode ? '【深度六维改写策略 - 全部执行】' : '【标准改写策略】',
+        '1. 同义替换：用语义相近但表达不同的词汇替换原词，避免词组级别的重复',
+        '2. 句式重构：主动↔被动互换，长句拆成短句，短句合并成长句',
+        '3. 语序调整：改变句子内信息的排列顺序，语义不变但字面完全不同',
+        '4. 概念重述：用自己的话解释同一概念，而非直接引用原表达',
+        deepMode ? '5. 视角转换：从结论到原因、或从现象到本质，改变叙述切入角度' : '',
+        deepMode ? '6. 补充原创：在保留核心论点的基础上，加入过渡性分析句稀释重复密度' : '',
+        '',
+        '【改写要求】',
+        '- 改写后字面差异度要高，避免出现连续5字以上与原文相同的表达',
+        '- 保持总字数在原文的95%~115%之间',
+        historyFeedback ? `\n【本轮重点修正】${historyFeedback}` : '',
+        '',
+        '【待改写原文】',
+        originalText
+      ].filter(Boolean).join('\n') : [
         '你是一位资深中文学术写作专家，正在帮助作者修改一段论文草稿，使其读起来更像真实的人类专家撰写，而非AI生成。',
         '',
         '【严格禁止】',
