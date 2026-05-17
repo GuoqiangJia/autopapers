@@ -57,7 +57,6 @@ const INITIAL_AIGC_TEXT_QUICK = `Furthermore, it is widely acknowledged that dee
 
 const INITIAL_PLAGIARISM_TEXT_QUICK = `基于Java的教务管理系统主要是通过多线程并发机制来处理学生选课请求的。该系统可以实现学生选课、排课、成绩录入等功能。由于采用了高性能的后台缓存技术，系统不仅具备极佳运行稳定性，还能够很好地应对数万名学生同时在线访问造成的并发流量压力。`;
 
-const PARAPHRASED_PLAGIARISM_TEXT_QUICK = `本研究设计的Java教务选课系统利用多线程调度队列缓冲瞬时选课流量。系统主要涵盖成绩录入、智能排课和选课逻辑调度等核心微服务。后台底层引入了高性能分布式缓存机制，使其在高并发选课场景下仍能保持高可用性。`;
 
 const POLISHED_TEXTS = {
   light: `This Java system aims to identify why the server experiences database lock latency. We employ a connection pooling tool to evaluate the query pathways. The evaluation demonstrates that thread safety is the primary bottleneck, causing contention. We modified the locking logic, resolving the latency.`,
