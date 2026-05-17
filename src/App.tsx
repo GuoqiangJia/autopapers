@@ -314,7 +314,6 @@ export default function App() {
 
   // Mode Selection: 'quick' vs 'workspace' (For AIGC & Plagiarism Tabs)
   const [aigcMode, setAigcMode] = useState<'quick' | 'workspace'>('quick');
-  const [plagMode, setPlagMode] = useState<'quick' | 'workspace'>('quick');
 
   // --- AIGC REDUCER: QUICK MODE STATES ---
   const [aigcTextQuick, setAigcTextQuick] = useState(INITIAL_AIGC_TEXT_QUICK);
@@ -2067,44 +2066,10 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* Sub Mode Selection Selector tabs */}
-                <div style={{ display: 'flex', backgroundColor: 'var(--bg-tertiary)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-                  <button
-                    onClick={() => setPlagMode('quick')}
-                    style={{
-                      padding: '6px 14px',
-                      fontSize: '12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: plagMode === 'quick' ? 'var(--accent)' : 'transparent',
-                      color: plagMode === 'quick' ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                      fontWeight: plagMode === 'quick' ? 'bold' : 'normal',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ⚡ 快速单段改写
-                  </button>
-                  <button
-                    onClick={() => setPlagMode('workspace')}
-                    style={{
-                      padding: '6px 14px',
-                      fontSize: '12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: plagMode === 'workspace' ? 'var(--accent)' : 'transparent',
-                      color: plagMode === 'workspace' ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                      fontWeight: plagMode === 'workspace' ? 'bold' : 'normal',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    📄 全篇文档改写
-                  </button>
-                </div>
+                <div />
               </div>
 
-              {/* ----------------- MODE A: QUICK MODE ----------------- */}
-              {plagMode === 'quick' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
                   {/* Action ribbon */}
                   <div className="glass-panel" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2158,15 +2123,22 @@ export default function App() {
 
                   {/* Dual Editor */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
-                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>原始文本</span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {plagTextQuick.length}</span>
+                    {/* Left box */}
+                    <div className=”glass-panel” style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
+                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>原始文本</span>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(plagTextQuick); setDeepRewriteCopied(false); }}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}
+                        >
+                          <Copy size={12} /> 复制
+                        </button>
                       </div>
-                      <div style={{ padding: '16px', flex: 1 }}>
+                      <div style={{ padding: '16px', flex: 1, overflow: 'hidden' }}>
                         <textarea
                           value={plagTextQuick}
                           onChange={(e) => setPlagTextQuick(e.target.value)}
+                          placeholder=”粘贴待改写文本...”
                           style={{
                             width: '100%',
                             height: '100%',
@@ -2181,364 +2153,52 @@ export default function App() {
                           }}
                         />
                       </div>
+                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '8px 16px', display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {plagTextQuick.length}</span>
+                      </div>
                     </div>
 
-                    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '360px' }}>
-                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>深度改写结果</span>
-                        {paraphrasedTextQuick && (
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(paraphrasedTextQuick); setDeepRewriteCopied(true); setTimeout(() => setDeepRewriteCopied(false), 1500); }}
-                            style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          >
-                            <Copy size={12} /> {deepRewriteCopied ? '已复制 ✓' : '复制'}
-                          </button>
-                        )}
+                    {/* Right box */}
+                    <div className=”glass-panel” style={{ display: 'flex', flexDirection: 'column', height: '400px', border: '1px solid var(--border-light)' }}>
+                      <div style={{ borderBottom: '1px solid var(--border-light)', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>深度改写结果</span>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(paraphrasedTextQuick); setDeepRewriteCopied(true); setTimeout(() => setDeepRewriteCopied(false), 1500); }}
+                          disabled={!paraphrasedTextQuick}
+                          style={{
+                            background: 'transparent', border: 'none',
+                            color: 'var(--text-primary)',
+                            fontSize: '11px', cursor: paraphrasedTextQuick ? 'pointer' : 'not-allowed',
+                            display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold',
+                            opacity: paraphrasedTextQuick ? 1 : 0.4
+                          }}
+                        >
+                          <Copy size={12} /> {deepRewriteCopied ? '已复制 ✓' : '复制'}
+                        </button>
                       </div>
                       <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
                         {isParaphrasingQuick ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '28px', height: '28px', animation: 'spin 1s linear infinite' }} />
-                            <span style={{ fontSize: '12px', color: 'var(--accent)' }}>正在进行同义替换、句式重构、视角转换深度改写中...</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                            <div style={{ border: '3px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '24px', height: '24px', animation: 'spin 1s linear infinite' }} />
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>正在进行同义替换、句式重构、视角转换深度改写中...</span>
                           </div>
                         ) : paraphrasedTextQuick ? (
-                          <div style={{ lineHeight: '1.8', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
+                          <div style={{ lineHeight: '1.8', fontSize: '14px', color: 'var(--accent-text)', whiteSpace: 'pre-wrap' }}>
                             {paraphrasedTextQuick}
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '13px' }}>
-                            输入原始文本，点击”执行深度改写”，查看六维改写结果。
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
+                            等待改写执行...
                           </div>
                         )}
+                      </div>
+                      <div style={{ borderTop: '1px solid var(--border-light)', padding: '8px 16px', display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>字数: {paraphrasedTextQuick.length}</span>
                       </div>
                     </div>
                   </div>
 
-                </div>
-              )}
-
-              {/* ----------------- MODE B: WORKSPACE MODE ----------------- */}
-              {plagMode === 'workspace' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-                  {/* File upload prompt trigger */}
-                  {!hasUploaded && !isUploading && (
-                    <div
-                      onClick={triggerDocumentUploadSimulation}
-                      style={{
-                        border: '2px dashed rgba(223, 192, 151, 0.3)',
-                        borderRadius: '12px',
-                        padding: '60px 20px',
-                        textAlign: 'center',
-                        backgroundColor: 'rgba(223, 192, 151, 0.01)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--accent)';
-                        e.currentTarget.style.backgroundColor = 'rgba(223, 192, 151, 0.03)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(223, 192, 151, 0.3)';
-                        e.currentTarget.style.backgroundColor = 'rgba(223, 192, 151, 0.01)';
-                      }}
-                    >
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(223, 192, 151, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
-                        <FileText size={24} style={{ margin: '0 auto' }} />
-                      </div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
-                        拖拽 Word (.docx) 查重标记论文至此上传
-                      </h3>
-                      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto' }}>
-                        上传后，教务引擎将自动定位重叠红色段落，进行并行语法异化降重，其余安全段落将保持100%原样不动，节省算力点。
-                      </p>
-                      <button style={{
-                        marginTop: '16px',
-                        backgroundColor: 'rgba(223, 192, 151, 0.1)',
-                        border: '1px solid var(--accent)',
-                        color: 'var(--accent)',
-                        borderRadius: '6px',
-                        padding: '6px 16px',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}>
-                        打开查重原稿
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Processing display */}
-                  {isUploading && (
-                    <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
-                      <div style={{ border: '4px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }} />
-                      <div>
-                        <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 4px' }}>
-                          正在匹配知网重复红区及执行局部降重改写...
-                        </h4>
-                        <p style={{ fontSize: '11px', color: 'var(--accent)' }}>
-                          {uploadStage}
-                        </p>
-                      </div>
-                      <div style={{ width: '100%', maxWidth: '400px', height: '6px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ width: `${uploadProgress}%`, height: '100%', backgroundColor: 'var(--accent)', transition: 'width 0.1s linear' }} />
-                      </div>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                        {uploadProgress}%
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Workspace Content rendering */}
-                  {hasUploaded && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-                      {/* Ribbon Header Toolbar (Redesigned 2-Tier Masterpiece) */}
-                      <div className="glass-panel" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '20px', borderBottom: '1px solid var(--border-medium)' }}>
-                        {/* Tier 1: Top Navigation Bar */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                          {/* Left: Back button & Document Title */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0, flex: 1 }}>
-                            <button
-                              onClick={handleResetDocument}
-                              style={{
-                                background: 'rgba(255, 255, 255, 0.06)',
-                                border: '1px solid var(--border-light)',
-                                borderRadius: '8px',
-                                color: 'var(--text-secondary)',
-                                padding: '6px 14px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                transition: 'all 0.2s',
-                                flexShrink: 0
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--accent)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--border-light)';
-                                e.currentTarget.style.color = 'var(--text-secondary)';
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                              }}
-                            >
-                              ⬅️ 返回历史列表
-                            </button>
-
-                            <div style={{ borderLeft: '1px solid var(--border-light)', height: '22px', flexShrink: 0 }}></div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                              <FileText size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                              <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '380px' }} title="基于Java的教务管理系统_知网查重后.docx">
-                                基于Java的教务管理系统_知网查重后.docx
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Right: Mode Badges */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                            <span style={{
-                              fontSize: '11px',
-                              backgroundColor: 'rgba(255, 77, 79, 0.15)',
-                              color: '#ff4d4f',
-                              padding: '3px 10px',
-                              borderRadius: '6px',
-                              fontWeight: 'bold',
-                              border: '1px solid rgba(255, 77, 79, 0.25)'
-                            }}>
-                              知网查重
-                            </span>
-                            <span style={{
-                              fontSize: '11px',
-                              backgroundColor: 'rgba(82, 196, 26, 0.15)',
-                              color: '#52c41a',
-                              padding: '3px 10px',
-                              borderRadius: '6px',
-                              fontWeight: 'bold',
-                              border: '1px solid rgba(82, 196, 26, 0.25)'
-                            }}>
-                              自动降重
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Separator Line */}
-                        <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)', width: '100%' }}></div>
-
-                        {/* Tier 2: Bottom Telemetry Stats & Action Controls */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                          {/* Left: Telemetry Dashboard stats */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>算力消耗:</span>
-                              <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: '14px', backgroundColor: 'rgba(223, 192, 151, 0.08)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(223, 192, 151, 0.15)' }}>6,805 点</strong>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>检测重复率:</span>
-                              <strong style={{ color: '#ff4d4f', fontFamily: 'var(--font-mono)', fontSize: '14px', backgroundColor: 'rgba(255, 77, 79, 0.08)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(255, 77, 79, 0.15)' }}>34.5% ➔ 8.2%</strong>
-                            </div>
-                          </div>
-
-                          {/* Right: Actions */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <button
-                              onClick={handleResetDocument}
-                              style={{
-                                background: 'rgba(255, 77, 79, 0.06)',
-                                border: '1px solid rgba(255, 77, 79, 0.2)',
-                                borderRadius: '8px',
-                                color: '#ff4d4f',
-                                padding: '8px 16px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.15)';
-                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.4)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(255, 77, 79, 0.06)';
-                                e.currentTarget.style.borderColor = 'rgba(255, 77, 79, 0.2)';
-                              }}
-                            >
-                              <RefreshCw size={12} /> 关闭工作区
-                            </button>
-
-                            <button
-                              onClick={() => handleExportWord()}
-                              style={{
-                                backgroundColor: 'var(--accent)',
-                                color: 'var(--bg-primary)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '10px 24px',
-                                fontSize: '13px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                boxShadow: '0 4px 16px var(--accent-glow)',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'none';
-                                e.currentTarget.style.boxShadow = '0 4px 16px var(--accent-glow)';
-                              }}
-                            >
-                              <Download size={16} /> 一键导出降重版文档 (.docx)
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Stacked Paragraph cards */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        {paragraphs.map((p) => {
-                          const isCardRegenerating = !!regeneratingCards[p.id];
-                          const viewMode = paragraphViewModes[p.id] || 'diff';
-
-                          if (p.type === 'header') {
-                            return (
-                              <div key={p.id} style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '16px' }}>
-                                <div style={{ width: '36px', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold' }}>#{p.id}</div>
-                                <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 'bold' }}>
-                                    非正文结构： {p.originalText}
-                                  </span>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>安全无重复，跳过降重处理</span>
-                                </div>
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div key={p.id} style={{ display: 'flex', backgroundColor: 'rgba(14, 18, 34, 0.2)', border: '1px solid var(--border-light)', borderRadius: '10px', overflow: 'hidden' }}>
-                              <div style={{ width: '40px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '16px 0', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold', borderRight: '1px solid var(--border-light)', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                                #{p.id}
-                              </div>
-
-                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ borderBottom: '1px solid var(--border-light)', padding: '16px' }}>
-                                  <span style={{ fontSize: '11px', color: '#ff4d4f', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                                    知网查重标红句段
-                                  </span>
-                                  <p style={{ fontSize: '13px', lineHeight: '1.8', color: 'var(--text-secondary)', margin: 0 }}>
-                                    {p.originalText}
-                                  </p>
-                                </div>
-
-                                <div style={{ padding: '16px', backgroundColor: 'rgba(82, 196, 26, 0.01)', borderBottom: '1px solid var(--border-light)' }}>
-                                  <span style={{ fontSize: '11px', color: '#52c41a', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-                                    降重规避改写 ({viewMode === 'diff' ? '对比视图' : '纯净改后'})
-                                  </span>
-
-                                  {isCardRegenerating ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent)', fontSize: '12px', height: '60px' }}>
-                                      <div style={{ border: '2px solid rgba(223, 192, 151, 0.1)', borderTopColor: 'var(--accent)', borderRadius: '50%', width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                                      正在动态消配同义词、逆向语序、调整高阶介词...
-                                    </div>
-                                  ) : (
-                                    <p style={{ fontSize: '13px', lineHeight: '1.8', margin: 0 }}>
-                                      {viewMode === 'diff' ? (
-                                        p.diffSegments.map((seg, idx) => {
-                                          if (seg.type === 'removed') {
-                                            return (
-                                              <del key={idx} style={{ color: '#ff4d4f', backgroundColor: 'rgba(255, 77, 79, 0.08)', textDecoration: 'line-through', padding: '0 2px' }}>
-                                                {seg.text}
-                                              </del>
-                                            );
-                                          } else if (seg.type === 'added') {
-                                            return (
-                                              <ins key={idx} style={{ color: '#52c41a', backgroundColor: 'rgba(82, 196, 26, 0.08)', textDecoration: 'none', padding: '0 4px', borderRadius: '2px', fontWeight: '500' }}>
-                                                {seg.text}
-                                              </ins>
-                                            );
-                                          }
-                                          return <span key={idx}>{seg.text}</span>;
-                                        })
-                                      ) : (
-                                        <span>{p.finalText}</span>
-                                      )}
-                                    </p>
-                                  )}
-                                </div>
-
-                                <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                                  <span style={{ fontSize: '11px', color: '#52c41a' }}>已脱红降重合格 ✓</span>
-                                  <div style={{ display: 'flex', gap: '16px' }}>
-                                    <button onClick={() => navigator.clipboard.writeText(p.finalText)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer' }}>复制结果</button>
-                                    <button onClick={() => toggleCardViewMode(p.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                      {viewMode === 'diff' ? '隐藏变动线' : '显示变动差异'}
-                                    </button>
-                                    <button onClick={() => handleRegenerateCard(p.id)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '11px', cursor: 'pointer' }}>重新选词重组</button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                    </div>
-                  )}
-
-                </div>
-              )}
+              </div>
 
             </div>
           )}
